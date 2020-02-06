@@ -42,7 +42,7 @@
     "lint": "semistandard src/**/*.js test/**/*.js --fix --verbose",
     "coverage": "istanbul cover node_modules/mocha/bin/_mocha -- --opts mocha.opts",
     "mocha": "mocha --opts mocha.opts",
-    "start": "node example/app"
+    "build": "npx babel src --out-dir lib"
   },
   "semistandard": {
     "env": [
