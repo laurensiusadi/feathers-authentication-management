@@ -39,8 +39,8 @@
     "publish": "git push origin --tags && npm run changelog && git push origin",
     "changelog": "github_changelog_generator && git add CHANGELOG.md && git commit -am \"Updating changelog\"",
     "test": "npm run lint && npm run coverage",
-    "lint": "semistandard src/**/*.js test/**/*.js --fix",
-    "coverage": "istanbul cover _mocha -- --opts mocha.opts",
+    "lint": "semistandard src/**/*.js test/**/*.js --fix --verbose",
+    "coverage": "istanbul cover node_modules/mocha/bin/_mocha -- --opts mocha.opts",
     "mocha": "mocha --opts mocha.opts",
     "start": "node example/app"
   },
@@ -57,11 +57,15 @@
     "feathers-hooks-common": "^4.17.14"
   },
   "devDependencies": {
-    "@feathersjs/feathers": "^3.2.3",
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.8.4",
+    "@babel/preset-env": "^7.8.4",
+    "@feathersjs/feathers": "^4.5.1",
+    "babel-plugin-add-module-exports": "^1.0.2",
     "chai": "^4.2.0",
     "feathers-memory": "^2.2.0",
     "istanbul": "^1.1.0-alpha.1",
-    "mocha": "^3.3.0",
-    "semistandard": "^11.0.0"
+    "mocha": "^5.2.0",
+    "semistandard": "12.0.1"
   }
 }

@@ -4,7 +4,7 @@ const feathers = require('@feathersjs/feathers');
 const feathersMemory = require('feathers-memory');
 const authLocalMgnt = require('../src/index');
 const SpyOn = require('./helpers/basic-spy');
-const { hashPassword } = require('../src/helpers')
+const { hashPassword } = require('../src/helpers');
 const { timeoutEachTest, maxTimeAllTests } = require('./helpers/config');
 
 const now = Date.now();
@@ -14,12 +14,12 @@ const makeUsersService = (options) => function (app) {
 };
 
 const fieldToHash = 'resetShortToken';
-const users_Id = [
+const usersIdUnderscore = [
   // The added time interval must be longer than it takes to run ALL the tests
   { _id: 'a', email: 'a', username: 'aa', isVerified: true, resetToken: '000', resetShortToken: '00099', resetExpires: now + maxTimeAllTests },
   { _id: 'b', email: 'b', username: 'bb', isVerified: true, resetToken: null, resetShortToken: null, resetExpires: null },
   { _id: 'c', email: 'c', username: 'cc', isVerified: true, resetToken: '111', resetShortToken: '11199', resetExpires: now - maxTimeAllTests },
-  { _id: 'd', email: 'd', username: 'dd', isVerified: false, resetToken: '222', resetShortToken: '22299', resetExpires: now - maxTimeAllTests },
+  { _id: 'd', email: 'd', username: 'dd', isVerified: false, resetToken: '222', resetShortToken: '22299', resetExpires: now - maxTimeAllTests }
 ];
 
 const usersId = [
@@ -27,12 +27,14 @@ const usersId = [
   { id: 'a', email: 'a', username: 'aa', isVerified: true, resetToken: '000', resetShortToken: '00099', resetExpires: now + maxTimeAllTests },
   { id: 'b', email: 'b', username: 'bb', isVerified: true, resetToken: null, resetShortToken: null, resetExpires: null },
   { id: 'c', email: 'c', username: 'cc', isVerified: true, resetToken: '111', resetShortToken: '11199', resetExpires: now - maxTimeAllTests },
-  { id: 'd', email: 'd', username: 'dd', isVerified: false, resetToken: '222', resetShortToken: '22299', resetExpires: now - maxTimeAllTests },
+  { id: 'd', email: 'd', username: 'dd', isVerified: false, resetToken: '222', resetShortToken: '22299', resetExpires: now - maxTimeAllTests }
 ];
 
 // Tests
-['_id',/* 'id'*/].forEach(idType => {
-  ['paginated',/* 'non-paginated'*/].forEach(pagination => {
+/* 'id' */
+['_id'].forEach(idType => {
+  /* 'non-paginated' */
+  ['paginated'].forEach(pagination => {
     describe(`reset-pwd-short.js ${pagination} ${idType}`, function () {
       this.timeout(timeoutEachTest);
 
@@ -53,17 +55,17 @@ const usersId = [
           authLocalMgntService = app.service('authManagement');
 
           // Ugly but makes test much faster
-          if (users_Id[0][fieldToHash].length < 15) {
-            for (let i = 0, ilen = users_Id.length; i < ilen; i++) {
-              const hashed = await hashPassword(app, users_Id[i][fieldToHash]);
-              users_Id[i][fieldToHash] = hashed;
+          if (usersIdUnderscore[0][fieldToHash].length < 15) {
+            for (let i = 0, ilen = usersIdUnderscore.length; i < ilen; i++) {
+              const hashed = await hashPassword(app, usersIdUnderscore[i][fieldToHash]);
+              usersIdUnderscore[i][fieldToHash] = hashed;
               usersId[i][fieldToHash] = hashed;
             }
           }
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
 
@@ -77,7 +79,7 @@ const usersId = [
                 user: {
                   username: db[0].username
                 }
-              },
+              }
             });
             const user = await usersService.get(result.id || result._id);
 
@@ -105,7 +107,7 @@ const usersId = [
                 user: {
                   username: db[0].username
                 }
-              },
+              }
             });
             const user = await usersService.get(result.id || result._id);
 
@@ -133,7 +135,7 @@ const usersId = [
                   email: db[0].email,
                   username: db[0].username
                 }
-              },
+              }
             });
             const user = await usersService.get(result.id || result._id);
 
@@ -158,7 +160,7 @@ const usersId = [
                 token: '00099',
                 password: '123456',
                 user: {}
-              },
+              }
             });
 
             assert(false, 'unexpected succeeded.');
@@ -177,9 +179,9 @@ const usersId = [
                 password: '123456',
                 user: {
                   email: db[0].email,
-                  resetShortToken: '00099',
+                  resetShortToken: '00099'
                 }
-              },
+              }
             });
 
             assert(false, 'unexpected succeeded.');
@@ -197,9 +199,9 @@ const usersId = [
                 token: '22299',
                 password: '123456',
                 user: {
-                  email: db[3].email,
+                  email: db[3].email
                 }
-              },
+              }
             });
 
             assert(false, 'unexpected succeeded.');
@@ -217,9 +219,9 @@ const usersId = [
                 token: '11199',
                 password: '123456',
                 user: {
-                  username: db[2].username,
+                  username: db[2].username
                 }
-              },
+              }
             });
 
             assert(false, 'unexpected succeeded.');
@@ -237,9 +239,9 @@ const usersId = [
                 token: '999',
                 password: '123456',
                 user: {
-                  email: '999',
+                  email: '999'
                 }
-              },
+              }
             });
 
             assert(false, 'unexpected succeeded.');
@@ -257,9 +259,9 @@ const usersId = [
                 token: '999',
                 password: '123456',
                 user: {
-                  email: db[0].email,
+                  email: db[0].email
                 }
-              },
+              }
             });
 
             assert(false, 'unexpected succeeded.');
@@ -293,7 +295,7 @@ const usersId = [
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
 
@@ -305,9 +307,9 @@ const usersId = [
                 token: '00099',
                 password: '123456',
                 user: {
-                  email: db[0].email,
+                  email: db[0].email
                 }
-              },
+              }
             });
             const user = await usersService.get(result.id || result._id);
 
@@ -340,16 +342,16 @@ const usersId = [
 
 // Helpers
 
-async function notifier(action, user, notifierOptions, newEmail) {
+async function notifier (action, user, notifierOptions, newEmail) {
   return user;
 }
 
-function sanitizeUserForEmail(user) {
+function sanitizeUserForEmail (user) {
   const user1 = Object.assign({}, user);
   delete user1.password;
   return user1;
 }
 
-function clone(obj) {
+function clone (obj) {
   return JSON.parse(JSON.stringify(obj));
 }

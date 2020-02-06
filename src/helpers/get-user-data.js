@@ -9,7 +9,7 @@ function getUserData (data, checks = []) {
       { errors: { $className: 'badParams' } });
   }
 
-  const users = Array.isArray(data) ? data : data.data || [ data ];
+  const users = Array.isArray(data) ? data : data.data || [data];
   const user = users[0];
 
   if (users.length !== 1) {

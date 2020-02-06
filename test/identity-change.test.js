@@ -1,11 +1,10 @@
 
 const assert = require('chai').assert;
-const bcrypt = require('bcryptjs');
 const feathers = require('@feathersjs/feathers');
 const feathersMemory = require('feathers-memory');
 const authLocalMgnt = require('../src/index');
 const SpyOn = require('./helpers/basic-spy');
-const { hashPassword } = require('../src/helpers')
+const { hashPassword } = require('../src/helpers');
 const { timeoutEachTest } = require('./helpers/config');
 
 const makeUsersService = (options) => function (app) {
@@ -13,14 +12,14 @@ const makeUsersService = (options) => function (app) {
 };
 
 // users DB
-const users_Id = [
+const usersIdUnderscore = [
   { _id: 'a', email: 'a', plainPassword: 'aa', isVerified: false },
-  { _id: 'b', email: 'b', plainPassword: 'bb', isVerified: true },
+  { _id: 'b', email: 'b', plainPassword: 'bb', isVerified: true }
 ];
 
 const usersId = [
   { id: 'a', email: 'a', plainPassword: 'aa', isVerified: false },
-  { id: 'b', email: 'b', plainPassword: 'bb', isVerified: true },
+  { id: 'b', email: 'b', plainPassword: 'bb', isVerified: true }
 ];
 
 // Tests
@@ -46,23 +45,23 @@ const usersId = [
           authLocalMgntService = app.service('authManagement');
 
           // Ugly but makes test much faster
-          if (!users_Id[0].password) {
-            users_Id[0].password = await hashPassword(app, users_Id[0].plainPassword);
-            users_Id[1].password = await hashPassword(app, users_Id[1].plainPassword);
+          if (!usersIdUnderscore[0].password) {
+            usersIdUnderscore[0].password = await hashPassword(app, usersIdUnderscore[0].plainPassword);
+            usersIdUnderscore[1].password = await hashPassword(app, usersIdUnderscore[1].plainPassword);
 
-            usersId[0].password = users_Id[0].password;
-            usersId[1].password = users_Id[1].password;
+            usersId[0].password = usersIdUnderscore[0].password;
+            usersId[1].password = usersIdUnderscore[1].password;
           }
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
 
         it('updates verified user', async () => {
           try {
-            const userRec = clone(users_Id[1]);
+            const userRec = clone(usersIdUnderscore[1]);
 
             result = await authLocalMgntService.create({
               action: 'identityChange',
@@ -70,7 +69,7 @@ const usersId = [
                 user: { email: userRec.email },
                 password: userRec.plainPassword,
                 changes: { email: 'b@b' }
-                },
+              }
             });
             const user = await usersService.get(result.id || result._id);
 
@@ -84,7 +83,7 @@ const usersId = [
 
         it('updates unverified user', async () => {
           try {
-            const userRec = clone(users_Id[0]);
+            const userRec = clone(usersIdUnderscore[0]);
 
             result = await authLocalMgntService.create({
               action: 'identityChange',
@@ -92,7 +91,7 @@ const usersId = [
                 user: { email: userRec.email },
                 password: userRec.plainPassword,
                 changes: { email: 'a@a' }
-              },
+              }
             });
             const user = await usersService.get(result.id || result._id);
 
@@ -106,7 +105,7 @@ const usersId = [
 
         it('error on wrong password', async () => {
           try {
-            const userRec = clone(users_Id[0]);
+            const userRec = clone(usersIdUnderscore[0]);
 
             result = await authLocalMgntService.create({
               action: 'identityChange',
@@ -114,7 +113,7 @@ const usersId = [
                 user: { email: userRec.email },
                 password: 'ghghghg',
                 changes: { email: 'a@a' }
-              },
+              }
             });
 
             assert(false, 'unexpected succeeded.');
@@ -147,13 +146,13 @@ const usersId = [
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
-  
+
         it('updates verified user', async () => {
           try {
-            const userRec = clone(users_Id[1]);
+            const userRec = clone(usersIdUnderscore[1]);
 
             result = await authLocalMgntService.create({
               action: 'identityChange',
@@ -161,7 +160,7 @@ const usersId = [
                 user: { email: userRec.email },
                 password: userRec.plainPassword,
                 changes: { email: 'b@b' }
-              },
+              }
             });
             const user = await usersService.get(result.id || result._id);
 
@@ -181,7 +180,7 @@ const usersId = [
                   )
                 ),
                 {}
-              ],
+              ]
             );
 
             assert.strictEqual(user.isVerified, true, 'isVerified not false');
@@ -201,17 +200,17 @@ const usersId = [
 
 // Helpers
 
-async function notifier(action, user, notifierOptions, newEmail) {
+async function notifier (action, user, notifierOptions, newEmail) {
   return user;
 }
 
-function sanitizeUserForEmail(user) {
+function sanitizeUserForEmail (user) {
   const user1 = clone(user);
   delete user1.password;
   return user1;
 }
 
-function extractProps(obj, ...rest) {
+function extractProps (obj, ...rest) {
   const res = {};
   rest.forEach(key => {
     res[key] = obj[key];
@@ -219,6 +218,6 @@ function extractProps(obj, ...rest) {
   return res;
 }
 
-function clone(obj) {
+function clone (obj) {
   return JSON.parse(JSON.stringify(obj));
 }

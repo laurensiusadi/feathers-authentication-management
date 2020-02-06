@@ -4,7 +4,7 @@ const feathers = require('@feathersjs/feathers');
 const feathersMemory = require('feathers-memory');
 const authLocalMgnt = require('../src/index');
 const SpyOn = require('./helpers/basic-spy');
-const { hashPassword } = require('../src/helpers')
+const { hashPassword } = require('../src/helpers');
 const { timeoutEachTest, maxTimeAllTests } = require('./helpers/config');
 
 const now = Date.now();
@@ -14,12 +14,12 @@ const makeUsersService = (options) => function (app) {
 };
 
 const fieldToHash = 'resetToken';
-const users_Id = [
+const usersIdUnderscore = [
   // The added time interval must be longer than it takes to run ALL the tests
   { _id: 'a', email: 'a', isVerified: true, resetToken: 'a___000', resetExpires: now + maxTimeAllTests },
   { _id: 'b', email: 'b', isVerified: true, resetToken: null, resetExpires: null },
   { _id: 'c', email: 'c', isVerified: true, resetToken: 'c___111', resetExpires: now - maxTimeAllTests },
-  { _id: 'd', email: 'd', isVerified: false, resetToken: 'd___222', resetExpires: now - maxTimeAllTests },
+  { _id: 'd', email: 'd', isVerified: false, resetToken: 'd___222', resetExpires: now - maxTimeAllTests }
 ];
 
 const usersId = [
@@ -27,7 +27,7 @@ const usersId = [
   { id: 'a', email: 'a', isVerified: true, resetToken: 'a___000', resetExpires: now + maxTimeAllTests },
   { id: 'b', email: 'b', isVerified: true, resetToken: null, resetExpires: null },
   { id: 'c', email: 'c', isVerified: true, resetToken: 'c___111', resetExpires: now - maxTimeAllTests },
-  { id: 'd', email: 'd', isVerified: false, resetToken: 'd___222', resetExpires: now - maxTimeAllTests },
+  { id: 'd', email: 'd', isVerified: false, resetToken: 'd___222', resetExpires: now - maxTimeAllTests }
 ];
 
 // Tests
@@ -53,17 +53,17 @@ const usersId = [
           authLocalMgntService = app.service('authManagement');
 
           // Ugly but makes test much faster
-          if (users_Id[0][fieldToHash].length < 15) {
-            for (let i = 0, ilen = users_Id.length; i < ilen; i++) {
-              const hashed = await hashPassword(app, users_Id[i][fieldToHash]);
-              users_Id[i][fieldToHash] = hashed;
+          if (usersIdUnderscore[0][fieldToHash].length < 15) {
+            for (let i = 0, ilen = usersIdUnderscore.length; i < ilen; i++) {
+              const hashed = await hashPassword(app, usersIdUnderscore[i][fieldToHash]);
+              usersIdUnderscore[i][fieldToHash] = hashed;
               usersId[i][fieldToHash] = hashed;
             }
           }
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
 
@@ -167,17 +167,17 @@ const usersId = [
           app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
           app.configure(authLocalMgnt({
             notifier: spyNotifier.callWith,
-            testMode: true,
+            testMode: true
           }));
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
-  
+
         it('verifies valid token', async () => {
           try {
             result = await authLocalMgntService.create({
@@ -214,16 +214,16 @@ const usersId = [
 
 // Helpers
 
-async function notifier(action, user, notifierOptions, newEmail) {
+async function notifier (action, user, notifierOptions, newEmail) {
   return user;
 }
 
-function sanitizeUserForEmail(user) {
+function sanitizeUserForEmail (user) {
   const user1 = Object.assign({}, user);
   delete user1.password;
   return user1;
 }
 
-function clone(obj) {
+function clone (obj) {
   return JSON.parse(JSON.stringify(obj));
 }

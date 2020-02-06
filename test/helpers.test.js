@@ -4,13 +4,12 @@ const feathers = require('@feathersjs/feathers');
 const feathersMemory = require('feathers-memory');
 const authLocalMgnt = require('../src/index');
 const helpers = require('../src/helpers');
-const authManagementService = require('../src/index');
 
 const makeUsersService = (options) => function (app) {
   app.use('/users', feathersMemory(options));
 };
 
-const users_Id = [
+const usersIdUnderscore = [
   { _id: 'a', email: 'a', username: 'john a', sensitiveData: 'some secret' }
 ];
 
@@ -20,7 +19,7 @@ describe('helpers.js - sanitization', () => {
       id: 1,
       email: 'test@test.test',
       password: '0000000000',
-      resetToken: 'aaa',
+      resetToken: 'aaa'
     };
 
     const result1 = helpers.sanitizeUserForClient(user);
@@ -53,7 +52,7 @@ describe('helpers.js - sanitization', () => {
       email: 'test@test.test',
       password: '0000000000',
       resetToken: 'aaa',
-      toJSON: function() {
+      toJSON: function () {
         return Object.assign({}, this, { self: undefined });
       }
     };
@@ -73,7 +72,7 @@ describe('helpers.js - sanitization', () => {
       email: 'test@test.test',
       password: '0000000000',
       resetToken: 'aaa',
-      toObject: function() {
+      toObject: function () {
         return Object.assign({}, this, { self: undefined });
       }
     };
@@ -98,7 +97,7 @@ describe('helpers.js - sanitization', () => {
 
     const usersService = app.service('users');
     await usersService.remove(null);
-    await usersService.create(users_Id);
+    await usersService.create(usersIdUnderscore);
 
     const result = await authManagement.create({
       action: 'resendVerifySignup',
@@ -106,10 +105,10 @@ describe('helpers.js - sanitization', () => {
     });
 
     assert.isUndefined(result.sensitiveData);
-  })
+  });
 });
 
-function customSanitizeUserForClient(user) {
+function customSanitizeUserForClient (user) {
   const user1 = helpers.sanitizeUserForClient(user);
   delete user1.sensitiveData;
   return user1;

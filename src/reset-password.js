@@ -13,20 +13,20 @@ const debug = makeDebug('authLocalMgnt:resetPassword');
 
 module.exports = {
   resetPwdWithLongToken,
-  resetPwdWithShortToken,
+  resetPwdWithShortToken
 };
 
-async function resetPwdWithLongToken(options, resetToken, password) {
+async function resetPwdWithLongToken (options, resetToken, password) {
   ensureValuesAreStrings(resetToken, password);
 
-  return await resetPassword(options, { resetToken }, { resetToken }, password);
+  return resetPassword(options, { resetToken }, { resetToken }, password);
 }
 
-async function resetPwdWithShortToken(options, resetShortToken, identifyUser, password) {
+async function resetPwdWithShortToken (options, resetShortToken, identifyUser, password) {
   ensureValuesAreStrings(resetShortToken, password);
   ensureObjPropsValid(identifyUser, options.identifyUserProps);
 
-  return await resetPassword(options, identifyUser, { resetShortToken }, password);
+  return resetPassword(options, identifyUser, { resetShortToken }, password);
 }
 
 async function resetPassword (options, query, tokens, password) {
@@ -37,7 +37,7 @@ async function resetPassword (options, query, tokens, password) {
   let users;
 
   if (tokens.resetToken) {
-    let id = deconstructId(tokens.resetToken);
+    const id = deconstructId(tokens.resetToken);
     users = await usersService.get(id);
   } else if (tokens.resetShortToken) {
     users = await usersService.find({ query });
@@ -47,8 +47,8 @@ async function resetPassword (options, query, tokens, password) {
     );
   }
 
-  const checkProps = options.skipIsVerifiedCheck ?
-    ['resetNotExpired'] : ['resetNotExpired', 'isVerified'];
+  const checkProps = options.skipIsVerifiedCheck
+    ? ['resetNotExpired'] : ['resetNotExpired', 'isVerified'];
   const user1 = getUserData(users, checkProps);
 
   Object.keys(tokens).forEach((key) => {
@@ -67,7 +67,7 @@ async function resetPassword (options, query, tokens, password) {
       resetExpires: null
     });
 
-    new errors.BadRequest('Invalid token. Get for a new one. (authLocalMgnt)',
+    return errors.BadRequest('Invalid token. Get for a new one. (authLocalMgnt)',
       { errors: { $className: 'invalidToken' } }
     );
   }

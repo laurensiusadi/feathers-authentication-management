@@ -7,7 +7,6 @@ const SpyOn = require('./helpers/basic-spy');
 const { timeoutEachTest, maxTimeAllTests } = require('./helpers/config');
 
 const now = Date.now();
-const timeout = timeoutEachTest;
 
 const makeUsersService = (options) => function (app) {
   app.use('/users', feathersMemory(options));
@@ -15,12 +14,12 @@ const makeUsersService = (options) => function (app) {
 
 const usersId = [
   { id: 'a', email: 'a', isVerified: false, verifyToken: '000', verifyExpires: now + maxTimeAllTests },
-  { id: 'b', email: 'b', isVerified: true, verifyToken: null, verifyExpires: null },
+  { id: 'b', email: 'b', isVerified: true, verifyToken: null, verifyExpires: null }
 ];
 
-const users_Id = [
+const usersIdUnderscore = [
   { _id: 'a', email: 'a', isVerified: false, verifyToken: '000', verifyExpires: now + maxTimeAllTests },
-  { _id: 'b', email: 'b', isVerified: true, verifyToken: null, verifyExpires: null },
+  { _id: 'b', email: 'b', isVerified: true, verifyToken: null, verifyExpires: null }
 ];
 
 ['_id', 'id'].forEach(idType => {
@@ -46,7 +45,7 @@ const users_Id = [
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
 
@@ -130,14 +129,14 @@ const users_Id = [
           app.configure(authLocalMgnt({
             longTokenLen: 10,
             shortTokenLen: 9,
-            shortTokenDigits: true,
+            shortTokenDigits: true
           }));
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
 
@@ -177,14 +176,14 @@ const users_Id = [
           app.configure(authLocalMgnt({
             longTokenLen: 10,
             shortTokenLen: 9,
-            shortTokenDigits: false,
+            shortTokenDigits: false
           }));
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
 
@@ -228,14 +227,14 @@ const users_Id = [
             longTokenLen: 15,
             shortTokenLen: 6,
             shortTokenDigits: true,
-            notifier: spyNotifier.callWith,
+            notifier: spyNotifier.callWith
           }));
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
 
@@ -256,7 +255,7 @@ const users_Id = [
             assert.match(user.resetToken, /^\$2[ayb]\$.{56}$/);
             aboutEqualDateTime(user.resetExpires, makeDateTime());
 
-            const expected = spyNotifier.result()[0].args
+            const expected = spyNotifier.result()[0].args;
             expected[1] = Object.assign({}, expected[1], {
               resetToken: user.resetToken,
               resetShortToken: user.resetShortToken
@@ -277,30 +276,29 @@ const users_Id = [
   });
 });
 
-
 // Helpers
 
-async function notifier(action, user, notifierOptions, newEmail) {
+async function notifier (action, user, notifierOptions, newEmail) {
   return user;
 }
 
-function makeDateTime(options1) {
+function makeDateTime (options1) {
   options1 = options1 || {};
   return Date.now() + (options1.delay || maxTimeAllTests);
 }
 
-function aboutEqualDateTime(time1, time2, msg, delta) {
+function aboutEqualDateTime (time1, time2, msg, delta) {
   delta = delta || maxTimeAllTests;
   const diff = Math.abs(time1 - time2);
   assert.isAtMost(diff, delta, msg || `times differ by ${diff}ms`);
 }
 
-function sanitizeUserForEmail(user) {
+function sanitizeUserForEmail (user) {
   const user1 = clone(user);
   delete user1.password;
   return user1;
 }
 
-function clone(obj) {
+function clone (obj) {
   return JSON.parse(JSON.stringify(obj));
 }

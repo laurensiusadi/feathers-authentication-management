@@ -1,5 +1,5 @@
-
 // Wrapper for client interface to feathers-authenticate-management
+const errors = require('@feathersjs/errors');
 
 function AuthManagement (app) { // eslint-disable-line no-unused-vars
   if (!(this instanceof AuthManagement)) {
@@ -8,78 +8,74 @@ function AuthManagement (app) { // eslint-disable-line no-unused-vars
 
   const authManagement = app.service('authManagement');
 
-  this.checkUnique = async (identifyUser, ownId, ifErrMsg) => await authManagement.create({
+  this.checkUnique = async (identifyUser, ownId, ifErrMsg) => authManagement.create({
     action: 'checkUnique',
     value: identifyUser,
     ownId,
     meta: { noErrMsg: ifErrMsg }
   }, {});
 
-  this.resendVerifySignup = async (identifyUser, notifierOptions) => await authManagement.create({
+  this.resendVerifySignup = async (identifyUser, notifierOptions) => authManagement.create({
     action: 'resendVerifySignup',
     value: identifyUser,
     notifierOptions
   }, {});
 
-  this.verifySignupLong = async (verifyToken) => await authManagement.create({
+  this.verifySignupLong = async (verifyToken) => authManagement.create({
     action: 'verifySignupLong',
     value: verifyToken
   }, {});
 
-  this.verifySignupShort = async (verifyShortToken, identifyUser) => await authManagement.create({
+  this.verifySignupShort = async (verifyShortToken, identifyUser) => authManagement.create({
     action: 'verifySignupShort',
     value: { user: identifyUser, token: verifyShortToken }
   }, {});
 
-  this.sendResetPwd = async (identifyUser, notifierOptions) => await authManagement.create({
+  this.sendResetPwd = async (identifyUser, notifierOptions) => authManagement.create({
     action: 'sendResetPwd',
     value: identifyUser,
     notifierOptions
   }, {});
 
-  this.resetPwdLong = async (resetToken, password) => await authManagement.create({
+  this.resetPwdLong = async (resetToken, password) => authManagement.create({
     action: 'resetPwdLong',
     value: { token: resetToken, password }
   }, {});
 
-  this.resetPwdShort = async (resetShortToken, identifyUser, password) => await authManagement.create({
+  this.resetPwdShort = async (resetShortToken, identifyUser, password) => authManagement.create({
     action: 'resetPwdShort',
     value: { user: identifyUser, token: resetShortToken, password }
   }, {});
 
-  this.passwordChange = async (oldPassword, password, identifyUser) => await authManagement.create({
+  this.passwordChange = async (oldPassword, password, identifyUser) => authManagement.create({
     action: 'passwordChange',
     value: { user: identifyUser, oldPassword, password }
   }, {});
 
-  this.identityChange = async (password, changesIdentifyUser, identifyUser) => await authManagement.create({
+  this.identityChange = async (password, changesIdentifyUser, identifyUser) => authManagement.create({
     action: 'identityChange',
     value: { user: identifyUser, password, changes: changesIdentifyUser }
   }, {});
 
-  this.authenticate = async (email, password, cb) => {
-    let cbCalled = false;
-
-    return app.authenticate({ type: 'local', email, password })
+  this.authenticate = async (email, password) => {
+    return app.authenticate({ strategy: 'local', email, password })
       .then(result => {
-        const user = result.data;
+        const user = result.user;
 
-        if (!user || !user.isVerified) {
+        if (!user) {
           app.logout();
-          return cb(new Error(user ? 'User\'s email is not verified.' : 'No user returned.'));
+          return new errors.NotAuthenticated('Invalid login');
         }
 
-        if (cb) {
-          cbCalled = true;
-          return cb(null, user);
+        if (!user.isVerified) {
+          app.logout();
+          return new errors.NotAuthenticated('User\'s email is not verified');
         }
 
         return user;
       })
       .catch((err) => {
-        if (!cbCalled) {
-          cb(err);
-        }
+        return err;
       });
   };
 }

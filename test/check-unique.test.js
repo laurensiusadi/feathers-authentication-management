@@ -12,13 +12,13 @@ const makeUsersService = (options) => function (app) {
 const usersId = [
   { id: 'a', email: 'a', username: 'john a' },
   { id: 'b', email: 'b', username: 'john b' },
-  { id: 'c', email: 'c', username: 'john b' },
+  { id: 'c', email: 'c', username: 'john b' }
 ];
 
-const users_Id = [
+const usersIdUnderscore = [
   { _id: 'a', email: 'a', username: 'john a' },
   { _id: 'b', email: 'b', username: 'john b' },
-  { _id: 'c', email: 'c', username: 'john b' },
+  { _id: 'c', email: 'c', username: 'john b' }
 ];
 
 ['_id', 'id'].forEach(idType => {
@@ -40,13 +40,13 @@ const users_Id = [
 
           usersService = app.service('users');
           await usersService.remove(null);
-          await usersService.create(clone(idType === '_id' ? users_Id : usersId));
+          await usersService.create(clone(idType === '_id' ? usersIdUnderscore : usersId));
         });
 
         it('returns a promise', async () => {
           const res = authLocalMgntService.create({
             action: 'checkUnique',
-            value: { username: 'john a' },
+            value: { username: 'john a' }
           })
             .then(() => {})
             .catch(() => {});
@@ -59,7 +59,7 @@ const users_Id = [
           try {
             await authLocalMgntService.create({
               action: 'checkUnique',
-              value: {},
+              value: {}
             });
           } catch (err) {
             console.log(err);
@@ -71,7 +71,7 @@ const users_Id = [
           try {
             await authLocalMgntService.create({
               action: 'checkUnique',
-              value: { username: 'hjhjhj' },
+              value: { username: 'hjhjhj' }
             });
           } catch (err) {
             console.log(err);
@@ -83,7 +83,7 @@ const users_Id = [
           try {
             await authLocalMgntService.create({
               action: 'checkUnique',
-              value: { username: 'john a' },
+              value: { username: 'john a' }
             });
 
             assert.fail(true, false, 'test unexpectedly succeeded');
@@ -98,7 +98,7 @@ const users_Id = [
             await authLocalMgntService.create({
               action: 'checkUnique',
               value: { username: 'john a' },
-              meta: { noErrMsg: true },
+              meta: { noErrMsg: true }
             });
 
             assert.fail(true, false, 'test unexpectedly succeeded');
@@ -112,7 +112,7 @@ const users_Id = [
           try {
             await authLocalMgntService.create({
               action: 'checkUnique',
-              value: { username: 'john b' },
+              value: { username: 'john b' }
             });
 
             assert.fail(true, false, 'test unexpectedly succeeded');
@@ -122,11 +122,11 @@ const users_Id = [
           }
         });
 
-        it('finds multiple queries on same item', async () =>  {
+        it('finds multiple queries on same item', async () => {
           try {
             await authLocalMgntService.create({
               action: 'checkUnique',
-              value: { username: 'john a', email: 'a' },
+              value: { username: 'john a', email: 'a' }
             });
 
             assert.fail(true, false, 'test unexpectedly succeeded');
@@ -140,7 +140,7 @@ const users_Id = [
           try {
             await authLocalMgntService.create({
               action: 'checkUnique',
-              value: { username: 'john a', email: 'b' },
+              value: { username: 'john a', email: 'b' }
             });
 
             assert.fail(true, false, 'test unexpectedly succeeded');
@@ -154,7 +154,7 @@ const users_Id = [
           try {
             await authLocalMgntService.create({
               action: 'checkUnique',
-              value: { username: undefined, email: null },
+              value: { username: undefined, email: null }
             });
           } catch (err) {
             console.log(err);
@@ -167,7 +167,7 @@ const users_Id = [
             await authLocalMgntService.create({
               action: 'checkUnique',
               value: { username: 'john a' },
-              ownId: 'a',
+              ownId: 'a'
             });
           } catch (err) {
             console.log(err);
@@ -180,7 +180,7 @@ const users_Id = [
             await authLocalMgntService.create({
               action: 'checkUnique',
               value: { username: 'john b' },
-              ownId: 'b',
+              ownId: 'b'
             });
 
             assert.fail(true, false, 'test unexpectedly succeeded');
@@ -196,6 +196,6 @@ const users_Id = [
 
 // Helpers
 
-function clone(obj) {
+function clone (obj) {
   return JSON.parse(JSON.stringify(obj));
 }

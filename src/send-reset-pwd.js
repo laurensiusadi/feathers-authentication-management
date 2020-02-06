@@ -20,7 +20,7 @@ async function sendResetPwd (options, identifyUser, notifierOptions) {
   ensureObjPropsValid(identifyUser, options.identifyUserProps);
 
   const users = await usersService.find({ query: identifyUser });
-  const user1 = getUserData(users,  options.skipIsVerifiedCheck ? [] : ['isVerified']);
+  const user1 = getUserData(users, options.skipIsVerifiedCheck ? [] : ['isVerified']);
 
   const user2 = Object.assign(user1, {
     resetExpires: Date.now() + options.resetDelay,
@@ -28,15 +28,15 @@ async function sendResetPwd (options, identifyUser, notifierOptions) {
       user1[usersServiceIdName],
       await getLongToken(options.longTokenLen)
     ),
-    resetShortToken: await getShortToken(options.shortTokenLen, options.shortTokenDigits),
+    resetShortToken: await getShortToken(options.shortTokenLen, options.shortTokenDigits)
   });
 
-  notifier(options.notifier, 'sendResetPwd', user2, notifierOptions)
+  notifier(options.notifier, 'sendResetPwd', user2, notifierOptions);
 
   const user3 = await usersService.patch(user2[usersServiceIdName], {
     resetExpires: user2.resetExpires,
     resetToken: await hashPassword(options.app, user2.resetToken),
-    resetShortToken: await hashPassword(options.app, user2.resetShortToken),
+    resetShortToken: await hashPassword(options.app, user2.resetShortToken)
   });
 
   return options.sanitizeUserForClient(user3);

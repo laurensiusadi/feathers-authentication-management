@@ -17,17 +17,29 @@ const usersId = [
   { id: 'b', email: 'b', isVerified: false, verifyToken: null, verifyExpires: null },
   { id: 'c', email: 'c', isVerified: false, verifyToken: '111', verifyExpires: now - maxTimeAllTests },
   { id: 'd', email: 'd', isVerified: true, verifyToken: '222', verifyExpires: now - maxTimeAllTests },
-  { id: 'e', email: 'e', isVerified: true, verifyToken: '800', verifyExpires: now + maxTimeAllTests,
-    verifyChanges: { cellphone: '800' } },
+  {
+    id: 'e',
+    email: 'e',
+    isVerified: true,
+    verifyToken: '800',
+    verifyExpires: now + maxTimeAllTests,
+    verifyChanges: { cellphone: '800' }
+  }
 ];
 
-const users_Id = [
+const usersIdUnderscore = [
   { _id: 'a', email: 'a', isVerified: false, verifyToken: '000', verifyExpires: now + maxTimeAllTests },
   { _id: 'b', email: 'b', isVerified: false, verifyToken: null, verifyExpires: null },
   { _id: 'c', email: 'c', isVerified: false, verifyToken: '111', verifyExpires: now - maxTimeAllTests },
   { _id: 'd', email: 'd', isVerified: true, verifyToken: '222', verifyExpires: now - maxTimeAllTests },
-  { _id: 'e', email: 'e', isVerified: true, verifyToken: '800', verifyExpires: now + maxTimeAllTests,
-    verifyChanges: { cellphone: '800' } },
+  {
+    _id: 'e',
+    email: 'e',
+    isVerified: true,
+    verifyToken: '800',
+    verifyExpires: now + maxTimeAllTests,
+    verifyChanges: { cellphone: '800' }
+  }
 ];
 
 ['_id', 'id'].forEach(idType => {
@@ -53,15 +65,15 @@ const users_Id = [
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
-  
+
         it('verifies valid token if not verified', async () => {
           try {
             result = await authLocalMgntService.create({
               action: 'verifySignupLong',
-              value: '000',
+              value: '000'
             });
             const user = await usersService.get(result.id || result._id);
 
@@ -82,7 +94,7 @@ const users_Id = [
           try {
             result = await authLocalMgntService.create({
               action: 'verifySignupLong',
-              value: '800',
+              value: '800'
             });
             const user = await usersService.get(result.id || result._id);
 
@@ -105,9 +117,9 @@ const users_Id = [
           try {
             result = await authLocalMgntService.create({
               action: 'verifySignupLong',
-              value: '000',
+              value: '000'
             });
-            const user = await usersService.get(result.id || result._id);
+            await usersService.get(result.id || result._id);
 
             assert.strictEqual(result.isVerified, true, 'isVerified not true');
             assert.strictEqual(result.verifyToken, undefined, 'verifyToken not undefined');
@@ -123,14 +135,16 @@ const users_Id = [
         it('error on verified user without verifyChange', async () => {
           try {
             result = await authLocalMgntService.create({
-                action: 'verifySignupLong',
-                value: '222',
-              },
-              {},
-              (err, user) => {}
+              action: 'verifySignupLong',
+              value: '222'
+            },
+            {},
+            (err, user) => {
+              console.log(err, user);
+            }
             );
 
-            assert(fail, 'unexpectedly succeeded');
+            assert(false, 'unexpectedly succeeded');
           } catch (err) {
             assert.isString(err.message);
             assert.isNotFalse(err.message);
@@ -141,10 +155,10 @@ const users_Id = [
           try {
             result = await authLocalMgntService.create({
               action: 'verifySignupLong',
-              value: '111',
+              value: '111'
             });
 
-            assert(fail, 'unexpectedly succeeded');
+            assert(false, 'unexpectedly succeeded');
           } catch (err) {
             assert.isString(err.message);
             assert.isNotFalse(err.message);
@@ -158,7 +172,7 @@ const users_Id = [
               value: '999'
             });
 
-            assert(fail, 'unexpectedly succeeded');
+            assert(false, 'unexpectedly succeeded');
           } catch (err) {
             assert.isString(err.message);
             assert.isNotFalse(err.message);
@@ -187,15 +201,15 @@ const users_Id = [
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
-  
+
         it('verifies valid token', async () => {
           try {
             result = await authLocalMgntService.create({
               action: 'verifySignupLong',
-              value: '000',
+              value: '000'
             });
             const user = await usersService.get(result.id || result._id);
 
@@ -222,16 +236,16 @@ const users_Id = [
 
 // Helpers
 
-async function notifier(action, user, notifierOptions, newEmail) {
+async function notifier (action, user, notifierOptions, newEmail) {
   return user;
 }
 
-function sanitizeUserForEmail(user) {
+function sanitizeUserForEmail (user) {
   const user1 = Object.assign({}, user);
   delete user1.password;
   return user1;
 }
 
-function clone(obj) {
+function clone (obj) {
   return JSON.parse(JSON.stringify(obj));
 }

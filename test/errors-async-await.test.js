@@ -38,7 +38,7 @@ describe('errors-async-await.js', () => {
       it('throw', () => {
         return service('throw')
           .then(result => {
-            assert(false, `unexpectedly succeeded`);
+            assert(false, 'unexpectedly succeeded');
           })
           .catch(err => {
             assert.equal(err.message, 'service throw');
@@ -82,7 +82,7 @@ describe('errors-async-await.js', () => {
       it('throw', () => {
         return service('passwordChange', 'throw')
           .then(result => {
-            assert(false, `unexpectedly succeeded`);
+            assert(false, 'unexpectedly succeeded');
           })
           .catch(err => {
             assert.equal(err.message, 'passwordChange throw');
@@ -126,7 +126,7 @@ describe('errors-async-await.js', () => {
       it('throw', () => {
         return service('passwordChange', 'ensureValuesAreStrings', 'throw')
           .then(result => {
-            assert(false, `unexpectedly succeeded`);
+            assert(false, 'unexpectedly succeeded');
           })
           .catch(err => {
             assert.equal(err.message, 'ensureValuesAreStrings throw');
@@ -136,7 +136,7 @@ describe('errors-async-await.js', () => {
   });
 });
 
-async function service(action, param1, param2) {
+async function service (action, param1, param2) {
   switch (action) {
     case 'ok':
       return 'service ok';
@@ -144,7 +144,7 @@ async function service(action, param1, param2) {
       try {
         return await passwordChange(param1, param2);
       } catch (err) {
-        return Promise.reject(err)
+        return Promise.reject(err);
       }
     case 'throw':
       throw new errors.BadRequest('service throw');
@@ -153,20 +153,20 @@ async function service(action, param1, param2) {
   }
 }
 
-async function passwordChange(param1, param2) {
+async function passwordChange (param1, param2) {
   switch (param1) {
     case 'ok':
       return 'passwordChange ok';
     case 'throw':
       throw new errors.BadRequest('passwordChange throw');
     case 'ensureValuesAreStrings':
-      return await ensureValuesAreStrings(param2);
+      return ensureValuesAreStrings(param2);
     default:
       throw new errors.BadRequest('passwordChange throw default');
   }
 }
 
-async function ensureValuesAreStrings(param2) {
+async function ensureValuesAreStrings (param2) {
   switch (param2) {
     case 'ok':
       return 'ensureValuesAreStrings ok';

@@ -4,7 +4,7 @@ const feathers = require('@feathersjs/feathers');
 const feathersMemory = require('feathers-memory');
 const authLocalMgnt = require('../src/index');
 const SpyOn = require('./helpers/basic-spy');
-const { timeoutEachTest, maxTimeAllTests, defaultVerifyDelay } = require('./helpers/config');
+const { timeoutEachTest, defaultVerifyDelay } = require('./helpers/config');
 
 const now = Date.now();
 
@@ -15,21 +15,21 @@ const makeUsersService = (options) => function (app) {
 const usersId = [
   { id: 'a', email: 'a', isVerified: false, verifyToken: '000', verifyShortToken: '00099', verifyExpires: now + 500, username: 'Doe' },
   { id: 'b', email: 'b', isVerified: true, verifyToken: null, verifyShortToken: null, verifyExpires: null },
-  { id: 'c', email: 'c', isVerified: true, verifyToken: '999', verifyShortToken: '99900', verifyExpires: null }, // impossible
+  { id: 'c', email: 'c', isVerified: true, verifyToken: '999', verifyShortToken: '99900', verifyExpires: null } // impossible
 ];
 
-const users_Id = [
+const usersIdUnderscore = [
   { _id: 'a', email: 'a', isVerified: false, verifyToken: '000', verifyShortToken: '00099', verifyExpires: now + 500, username: 'Doe' },
   { _id: 'b', email: 'b', isVerified: true, verifyToken: null, verifyShortToken: null, verifyExpires: null },
-  { _id: 'c', email: 'c', isVerified: true, verifyToken: '999', verifyShortToken: '99900', verifyExpires: null }, // impossible
+  { _id: 'c', email: 'c', isVerified: true, verifyToken: '999', verifyShortToken: '99900', verifyExpires: null } // impossible
 ];
 
-['_id' , 'id'].forEach(idType => {
+['_id', 'id'].forEach(idType => {
   ['paginated', 'non-paginated'].forEach(pagination => {
     describe(`resend-verify-signup.test.js ${pagination} ${idType}`, function () {
       this.timeout(timeoutEachTest);
 
-      function basicTest1(desc, values) {
+      function basicTest1 (desc, values) {
         describe(desc, () => {
           let app;
           let usersService;
@@ -48,7 +48,7 @@ const users_Id = [
 
             usersService = app.service('users');
             await usersService.remove(null);
-            db = clone(idType === '_id' ? users_Id : usersId);
+            db = clone(idType === '_id' ? usersIdUnderscore : usersId);
             await usersService.create(db);
           });
 
@@ -96,7 +96,7 @@ const users_Id = [
 
           it('error on verified user', async () => {
             try {
-              const result = await authLocalMgntService.create({
+              await authLocalMgntService.create({
                 action: 'resendVerifySignup',
                 value: values[2]
               });
@@ -110,7 +110,7 @@ const users_Id = [
 
           it('error on email not found', async () => {
             try {
-              const result = await authLocalMgntService.create({
+              await authLocalMgntService.create({
                 action: 'resendVerifySignup',
                 value: values[3]
               });
@@ -135,14 +135,14 @@ const users_Id = [
         { verifyToken: '000' },
         { verifyToken: '000' },
         { verifyToken: '999' },
-        { verifyToken: 'xxx' },
+        { verifyToken: 'xxx' }
       ]);
 
       basicTest1('emailOrToken is {verifyShortToken}', [
         { verifyShortToken: '00099' },
         { verifyShortToken: '00099' },
         { verifyShortToken: '99900' },
-        { verifyShortToken: 'xxx' },
+        { verifyShortToken: 'xxx' }
       ]);
 
       describe('emailOrToken is {verifyToken} can change len', () => {
@@ -156,14 +156,14 @@ const users_Id = [
           app = feathers();
           app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
           app.configure(authLocalMgnt({
-            longTokenLen: 10,
+            longTokenLen: 10
           }));
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
 
@@ -203,14 +203,14 @@ const users_Id = [
           app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
           app.configure(authLocalMgnt({
             longTokenLen: 15, // need to reset this
-            shortTokenLen: 8,
+            shortTokenLen: 8
           }));
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
 
@@ -251,14 +251,14 @@ const users_Id = [
           app.configure(authLocalMgnt({
             longTokenLen: 15, // need to reset this
             shortTokenLen: 9,
-            shortTokenDigits: false,
+            shortTokenDigits: false
           }));
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
 
@@ -299,17 +299,17 @@ const users_Id = [
           app.configure(authLocalMgnt({
             longTokenLen: 15, // need to reset this
             shortTokenLen: 6,
-            shortTokenDigits: false,
+            shortTokenDigits: false
           }));
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
-  
+
         it('verifies when correct', async () => {
           const verifyToken = '000';
 
@@ -397,10 +397,10 @@ const users_Id = [
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? users_Id : usersId);
+          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
           await usersService.create(db);
         });
-  
+
         it('is called', async () => {
           const email = 'a';
 
@@ -439,27 +439,27 @@ const users_Id = [
 
 // Helpers
 
-async function notifier(action, user, notifierOptions, newEmail) {
+async function notifier (action, user, notifierOptions, newEmail) {
   return user;
 }
 
-function makeDateTime(options1) {
+function makeDateTime (options1) {
   options1 = options1 || {};
   return Date.now() + (options1.delay || defaultVerifyDelay);
 }
 
-function aboutEqualDateTime(time1, time2, msg, delta) {
+function aboutEqualDateTime (time1, time2, msg, delta) {
   delta = delta || 500;
   const diff = Math.abs(time1 - time2);
   assert.isAtMost(diff, delta, msg || `times differ by ${diff}ms`);
 }
 
-function sanitizeUserForEmail(user) {
+function sanitizeUserForEmail (user) {
   const user1 = clone(user);
   delete user1.password;
   return user1;
 }
 
-function clone(obj) {
+function clone (obj) {
   return JSON.parse(JSON.stringify(obj));
 }

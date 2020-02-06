@@ -29,7 +29,7 @@ const optionsDefault = {
 
 module.exports = authenticationLocalManagement;
 
-function authenticationLocalManagement(options1 = {}) {
+function authenticationLocalManagement (options1 = {}) {
   debug('service being configured.');
 
   return function () {
@@ -38,7 +38,7 @@ function authenticationLocalManagement(options1 = {}) {
   };
 }
 
-function authLocalMgntMethods(options) {
+function authLocalMgntMethods (options) {
   return {
     async create (data) {
       debug(`create called. action=${data.action}`);
@@ -112,5 +112,5 @@ function authLocalMgntMethods(options) {
           );
       }
     }
-  }
+  };
 }
