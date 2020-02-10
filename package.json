@@ -28,9 +28,9 @@
   "engines": {
     "node": ">= 8.12.0"
   },
-  "main": "lib/",
+  "main": "src/",
   "directories": {
-    "lib": "lib"
+    "lib": "src"
   },
   "scripts": {
     "release:patch": "npm version patch && npm publish",
@@ -41,8 +41,7 @@
     "test": "npm run lint && npm run coverage",
     "lint": "semistandard src/**/*.js test/**/*.js --fix --verbose",
     "coverage": "istanbul cover node_modules/mocha/bin/_mocha -- --opts mocha.opts",
-    "mocha": "mocha --opts mocha.opts",
-    "build": "npx babel src --out-dir lib"
+    "mocha": "mocha --opts mocha.opts"
   },
   "semistandard": {
     "env": [
@@ -57,10 +56,6 @@
     "feathers-hooks-common": "^4.17.14"
   },
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.8.4",
-    "@babel/preset-env": "^7.8.4",
-    "@babel/runtime": "^7.8.4",
     "@feathersjs/feathers": "^4.5.1",
     "chai": "^4.2.0",
     "feathers-memory": "^2.2.0",
