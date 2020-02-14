@@ -72,7 +72,7 @@ function AuthManagement (app) { // eslint-disable-line no-unused-vars
           return new errors.NotAuthenticated('User\'s email is not verified');
         }
 
-        return user;
+        return result;
       })
       .catch((err) => {
         return err;
