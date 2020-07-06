@@ -153,7 +153,7 @@ describe('client.test.js', () => {
 
       assert.equal(spyAuthenticateEmail, 'ok');
       assert.equal(spyAuthenticatePassword, 'bb');
-      assert.deepEqual(result, usersDb[1]);
+      assert.deepEqual(result.data, usersDb[1]);
     });
 
     it('authenticate is not verified', async () => {

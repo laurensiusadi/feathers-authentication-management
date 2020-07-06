@@ -1,5 +1,5 @@
-
 // Wrapper for client interface to feathers-authenticate-management
+const errors = require('@feathersjs/errors');
 
 function AuthManagement (app) { // eslint-disable-line no-unused-vars
   if (!(this instanceof AuthManagement)) {
@@ -75,29 +75,20 @@ function AuthManagement (app) { // eslint-disable-line no-unused-vars
     }, {});
   };
 
-  this.authenticate = async (email, password, cb) => {
-    let cbCalled = false;
-
-    return app.authenticate({ type: 'local', email, password })
+  this.authenticate = async (email, password) => {
+    return app.authenticate({ strategy: 'local', email, password })
       .then(result => {
         const user = result.data;
 
         if (!user || !user.isVerified) {
           app.logout();
-          return cb(new Error(user ? 'User\'s email is not verified.' : 'No user returned.'));
+          return errors.NotAuthenticated(user ? 'User\'s email is not verified.' : 'No user returned.');
         }
 
-        if (cb) {
-          cbCalled = true;
-          return cb(null, user);
-        }
-
-        return user;
+        return result;
       })
       .catch((err) => {
-        if (!cbCalled) {
-          cb(err);
-        }
+        return err;
       });
   };
 }
