@@ -78,7 +78,7 @@ function AuthManagement (app) { // eslint-disable-line no-unused-vars
   this.authenticate = async (email, password) => {
     return app.authenticate({ strategy: 'local', email, password })
       .then(result => {
-        const user = result.data;
+        const user = result.user || result.data;
 
         if (!user || !user.isVerified) {
           app.logout();
