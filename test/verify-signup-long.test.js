@@ -1,4 +1,3 @@
-
 const assert = require('chai').assert;
 const feathers = require('@feathersjs/feathers');
 const feathersMemory = require('feathers-memory');
@@ -8,15 +7,41 @@ const { timeoutEachTest, maxTimeAllTests } = require('./helpers/config');
 
 const now = Date.now();
 
-const makeUsersService = (options) => function (app) {
-  app.use('/users', feathersMemory(options));
-};
+const makeUsersService = options =>
+  function (app) {
+    Object.assign(options, { multi: true });
+    app.use('/users', feathersMemory(options));
+  };
 
 const usersId = [
-  { id: 'a', email: 'a', isVerified: false, verifyToken: '000', verifyExpires: now + maxTimeAllTests },
-  { id: 'b', email: 'b', isVerified: false, verifyToken: null, verifyExpires: null },
-  { id: 'c', email: 'c', isVerified: false, verifyToken: '111', verifyExpires: now - maxTimeAllTests },
-  { id: 'd', email: 'd', isVerified: true, verifyToken: '222', verifyExpires: now - maxTimeAllTests },
+  {
+    id: 'a',
+    email: 'a',
+    isVerified: false,
+    verifyToken: '000',
+    verifyExpires: now + maxTimeAllTests
+  },
+  {
+    id: 'b',
+    email: 'b',
+    isVerified: false,
+    verifyToken: null,
+    verifyExpires: null
+  },
+  {
+    id: 'c',
+    email: 'c',
+    isVerified: false,
+    verifyToken: '111',
+    verifyExpires: now - maxTimeAllTests
+  },
+  {
+    id: 'd',
+    email: 'd',
+    isVerified: true,
+    verifyToken: '222',
+    verifyExpires: now - maxTimeAllTests
+  },
   {
     id: 'e',
     email: 'e',
@@ -27,11 +52,35 @@ const usersId = [
   }
 ];
 
-const usersIdUnderscore = [
-  { _id: 'a', email: 'a', isVerified: false, verifyToken: '000', verifyExpires: now + maxTimeAllTests },
-  { _id: 'b', email: 'b', isVerified: false, verifyToken: null, verifyExpires: null },
-  { _id: 'c', email: 'c', isVerified: false, verifyToken: '111', verifyExpires: now - maxTimeAllTests },
-  { _id: 'd', email: 'd', isVerified: true, verifyToken: '222', verifyExpires: now - maxTimeAllTests },
+const users_Id = [
+  {
+    _id: 'a',
+    email: 'a',
+    isVerified: false,
+    verifyToken: '000',
+    verifyExpires: now + maxTimeAllTests
+  },
+  {
+    _id: 'b',
+    email: 'b',
+    isVerified: false,
+    verifyToken: null,
+    verifyExpires: null
+  },
+  {
+    _id: 'c',
+    email: 'c',
+    isVerified: false,
+    verifyToken: '111',
+    verifyExpires: now - maxTimeAllTests
+  },
+  {
+    _id: 'd',
+    email: 'd',
+    isVerified: true,
+    verifyToken: '222',
+    verifyExpires: now - maxTimeAllTests
+  },
   {
     _id: 'e',
     email: 'e',
@@ -56,16 +105,19 @@ const usersIdUnderscore = [
 
         beforeEach(async () => {
           app = feathers();
-          app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-          app.configure(authLocalMgnt({
-
-          }));
+          app.configure(
+            makeUsersService({
+              id: idType,
+              paginate: pagination === 'paginated'
+            })
+          );
+          app.configure(authLocalMgnt({}));
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+          db = clone(idType === '_id' ? users_Id : usersId);
           await usersService.create(db);
         });
 
@@ -119,7 +171,7 @@ const usersIdUnderscore = [
               action: 'verifySignupLong',
               value: '000'
             });
-            await usersService.get(result.id || result._id);
+            const user = await usersService.get(result.id || result._id);
 
             assert.strictEqual(result.isVerified, true, 'isVerified not true');
             assert.strictEqual(result.verifyToken, undefined, 'verifyToken not undefined');
@@ -134,17 +186,16 @@ const usersIdUnderscore = [
 
         it('error on verified user without verifyChange', async () => {
           try {
-            result = await authLocalMgntService.create({
-              action: 'verifySignupLong',
-              value: '222'
-            },
-            {},
-            (err, user) => {
-              console.log(err, user);
-            }
+            result = await authLocalMgntService.create(
+              {
+                action: 'verifySignupLong',
+                value: '222'
+              },
+              {},
+              (err, user) => { }
             );
 
-            assert(false, 'unexpectedly succeeded');
+            assert(fail, 'unexpectedly succeeded');
           } catch (err) {
             assert.isString(err.message);
             assert.isNotFalse(err.message);
@@ -158,7 +209,7 @@ const usersIdUnderscore = [
               value: '111'
             });
 
-            assert(false, 'unexpectedly succeeded');
+            assert(fail, 'unexpectedly succeeded');
           } catch (err) {
             assert.isString(err.message);
             assert.isNotFalse(err.message);
@@ -172,7 +223,7 @@ const usersIdUnderscore = [
               value: '999'
             });
 
-            assert(false, 'unexpectedly succeeded');
+            assert(fail, 'unexpectedly succeeded');
           } catch (err) {
             assert.isString(err.message);
             assert.isNotFalse(err.message);
@@ -192,16 +243,24 @@ const usersIdUnderscore = [
           spyNotifier = new SpyOn(notifier);
 
           app = feathers();
-          app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-          app.configure(authLocalMgnt({
-            notifier: spyNotifier.callWith, testMode: true
-          }));
+          app.configure(
+            makeUsersService({
+              id: idType,
+              paginate: pagination === 'paginated'
+            })
+          );
+          app.configure(
+            authLocalMgnt({
+              notifier: spyNotifier.callWith,
+              testMode: true
+            })
+          );
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+          db = clone(idType === '_id' ? users_Id : usersId);
           await usersService.create(db);
         });
 

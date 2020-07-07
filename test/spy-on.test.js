@@ -36,6 +36,8 @@ describe('spy-on.test.js', () => {
       });
     });
 
-    function testCb (a, b, c, cb) { setTimeout(() => { return cb('a', true, [a, b, c]); }, 0); } // eslint-disable-line standard/no-callback-literal
+    function testCb (a, b, c, cb) {
+      setTimeout(() => (cb('a', true, [a, b, c])), 0);
+    }
   });
 });

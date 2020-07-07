@@ -2,6 +2,8 @@
 
 Sign up verification, forgotten password reset, and other capabilities for local authentication.
 
+This repo now works with async/await or Promises.
+
 This repo work with either the v1.0 rewrite of `feathers-authentication` or with v0.7.
 The example below uses v1.0.
 
@@ -41,6 +43,7 @@ provide much of the infrastructure necessary to implement such a scenario.
 ### User notifications may be sent for:
 
 - Sign up verification when a new user is created.
+- Sign up verification and initial password set when a new user is created.
 - Resending a signup verification, e.g. previous verification was lost or is expired.
 - Successful user verification.
 - Resetting the password when the password is forgotten.
@@ -109,14 +112,17 @@ app.configure(authentication)
 - service: The path of the service for user items, e.g. `/users` (default) or `/organization`.
 - path: The path to associate with this service. Default `authManagement`.
  See [Multiple services](#multiple-services) for more information.
+- skipIsVerifiedCheck: if `true` (default) it is impossible to reset password if email is not verified.
+- sanitizeUserForClient: ([default](https://github.com/feathers-plus/feathers-authentication-management/blob/master/src/helpers/sanitize-user-for-client.js)) sanatize the user in the response, if not overwriten **THE USER OBJECT IS IN THE RESPONSE** eg. on a password reset request, to reply with empty object use `sanitizeUserForClient: () => ({})`
 - notifier: `function(type, user, notifierOptions)` returns a Promise.
    - type: type of notification
-     - 'resendVerifySignup'    From resendVerifySignup API call
-     - 'verifySignup'          From verifySignupLong and verifySignupShort API calls
-     - 'sendResetPwd'          From sendResetPwd API call
-     - 'resetPwd'              From resetPwdLong and resetPwdShort API calls
-     - 'passwordChange'        From passwordChange API call
-     - 'identityChange'        From identityChange API call
+     - 'resendVerifySignup'      From resendVerifySignup API call
+     - 'verifySignup'            From verifySignupLong and verifySignupShort API calls
+     - 'verifySignupSetPassword' From verifySignupSetPasswordLong and verifySignupSetPasswordShort API calls
+     - 'sendResetPwd'            From sendResetPwd API call
+     - 'resetPwd'                From resetPwdLong and resetPwdShort API calls
+     - 'passwordChange'          From passwordChange API call
+     - 'identityChange'          From identityChange API call
    - user: user's item, minus password.
    - notifierOptions: notifierOptions option from resendVerifySignup and sendResetPwd API calls
 - longTokenLen: Half the length of the long token. Default is 15, giving 30-char tokens.
@@ -150,7 +156,7 @@ The following `user` item might also contain the following props:
 The `users` service is expected to be already configured.
 Its `patch` method is used to update the password when needed,
 and this module hashes the password before it is passed to `patch`,
-therefore `patch` may *not* have a `auth.hashPassword()` hook.
+therefore `patch` may *not* have a `auth.hashPassword()` hook. In cases where you only need hashPassword for externally submitted patch calls, you may use `iff(isProvider('external'), hashPassword())` on the patch hook.
 
 The user must be signed in before being allowed to change their password or communication values.
 The service, for feathers-authenticate v1.x, requires hooks similar to:
@@ -206,6 +212,23 @@ authManagement.create({ action: 'verifySignupShort',
   value: {
     user, // identify user, e.g. {email: 'a@a.com'}. See options.identifyUserProps.
     token, // compares to .verifyShortToken
+  }
+})
+
+// sign up verification and set password  with long token
+authManagement.create({ action: 'verifySignupSetPasswordLong',
+  value: {
+    token, // compares to .verifyToken
+    password, // new password
+  }
+})
+
+// sign up verification and set password with short token
+authManagement.create({ action: 'verifySignupSetPasswordShort',
+  value: {
+    user, // identify user, e.g. {email: 'a@a.com'}. See options.identifyUserProps.
+    token, // compares to .verifyShortToken
+    password, // new password
   }
 })
 
@@ -290,6 +313,12 @@ authManagement.verifySignupLong(verifyToken)
 // sign up or identityChange verification with short token
 authManagement.verifySignupShort(verifyShortToken, identifyUser)
 
+// sign up or identityChange verification with long token
+authManagement.verifySignupSetPasswordLong(verifyToken, password)
+
+// sign up or identityChange verification with short token
+authManagement.verifySignupSetPasswordShort(verifyShortToken, identifyUser, password)
+
 // send forgotten password notification
 authManagement.sendResetPwd(identifyUser, notifierOptions)
 
@@ -320,10 +349,6 @@ fetch('/authManagement', {
 })
   .then(data => { ... }).catch(err => { ... });
 ```
-
-You will want to refer to
-[authenticating over HTTP](./local.md).
-
 
 ### React Redux
 See `feathers-reduxify-services` for information about state, etc.
@@ -394,7 +419,7 @@ module.exports.after = {
   create: [
     hooks.remove('password'),
     aHookToEmailYourVerification(),
-    verifyHooks.removeVerification() // removes verification/reset fields other than .isVerified
+    verifyHooks.removeVerification() // removes verification/reset fields other than .isVerified from the response
   ]
 };
 ```

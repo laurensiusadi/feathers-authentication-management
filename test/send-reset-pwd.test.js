@@ -1,25 +1,53 @@
-
 const assert = require('chai').assert;
 const feathers = require('@feathersjs/feathers');
 const feathersMemory = require('feathers-memory');
 const authLocalMgnt = require('../src/index');
+const authService = require('./helpers/authenticationService');
+
 const SpyOn = require('./helpers/basic-spy');
 const { timeoutEachTest, maxTimeAllTests } = require('./helpers/config');
 
 const now = Date.now();
+const timeout = timeoutEachTest;
 
-const makeUsersService = (options) => function (app) {
-  app.use('/users', feathersMemory(options));
-};
+const makeUsersService = options =>
+  function (app) {
+    Object.assign(options, { multi: true });
+    app.use('/users', feathersMemory(options));
+  };
 
 const usersId = [
-  { id: 'a', email: 'a', isVerified: false, verifyToken: '000', verifyExpires: now + maxTimeAllTests },
-  { id: 'b', email: 'b', isVerified: true, verifyToken: null, verifyExpires: null }
+  {
+    id: 'a',
+    email: 'a',
+    isVerified: false,
+    verifyToken: '000',
+    verifyExpires: now + maxTimeAllTests
+  },
+  {
+    id: 'b',
+    email: 'b',
+    isVerified: true,
+    verifyToken: null,
+    verifyExpires: null
+  }
 ];
 
-const usersIdUnderscore = [
-  { _id: 'a', email: 'a', isVerified: false, verifyToken: '000', verifyExpires: now + maxTimeAllTests },
-  { _id: 'b', email: 'b', isVerified: true, verifyToken: null, verifyExpires: null }
+const users_Id = [
+  {
+    _id: 'a',
+    email: 'a',
+    isVerified: false,
+    verifyToken: '000',
+    verifyExpires: now + maxTimeAllTests
+  },
+  {
+    _id: 'b',
+    email: 'b',
+    isVerified: true,
+    verifyToken: null,
+    verifyExpires: null
+  }
 ];
 
 ['_id', 'id'].forEach(idType => {
@@ -36,16 +64,20 @@ const usersIdUnderscore = [
 
         beforeEach(async () => {
           app = feathers();
-          app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-          app.configure(authLocalMgnt({
-
-          }));
+          app.use('/authentication', authService(app));
+          app.configure(
+            makeUsersService({
+              id: idType,
+              paginate: pagination === 'paginated'
+            })
+          );
+          app.configure(authLocalMgnt({}));
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+          db = clone(idType === '_id' ? users_Id : usersId);
           await usersService.create(db);
         });
 
@@ -125,18 +157,27 @@ const usersIdUnderscore = [
 
         beforeEach(async () => {
           app = feathers();
-          app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-          app.configure(authLocalMgnt({
-            longTokenLen: 10,
-            shortTokenLen: 9,
-            shortTokenDigits: true
-          }));
+          app.use('/authentication', authService(app));
+
+          app.configure(
+            makeUsersService({
+              id: idType,
+              paginate: pagination === 'paginated'
+            })
+          );
+          app.configure(
+            authLocalMgnt({
+              longTokenLen: 10,
+              shortTokenLen: 9,
+              shortTokenDigits: true
+            })
+          );
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+          db = clone(idType === '_id' ? users_Id : usersId);
           await usersService.create(db);
         });
 
@@ -172,18 +213,27 @@ const usersIdUnderscore = [
 
         beforeEach(async () => {
           app = feathers();
-          app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-          app.configure(authLocalMgnt({
-            longTokenLen: 10,
-            shortTokenLen: 9,
-            shortTokenDigits: false
-          }));
+          app.use('/authentication', authService(app));
+
+          app.configure(
+            makeUsersService({
+              id: idType,
+              paginate: pagination === 'paginated'
+            })
+          );
+          app.configure(
+            authLocalMgnt({
+              longTokenLen: 10,
+              shortTokenLen: 9,
+              shortTokenDigits: false
+            })
+          );
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+          db = clone(idType === '_id' ? users_Id : usersId);
           await usersService.create(db);
         });
 
@@ -222,19 +272,28 @@ const usersIdUnderscore = [
           spyNotifier = new SpyOn(notifier);
 
           app = feathers();
-          app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-          app.configure(authLocalMgnt({
-            longTokenLen: 15,
-            shortTokenLen: 6,
-            shortTokenDigits: true,
-            notifier: spyNotifier.callWith
-          }));
+          app.use('/authentication', authService(app));
+
+          app.configure(
+            makeUsersService({
+              id: idType,
+              paginate: pagination === 'paginated'
+            })
+          );
+          app.configure(
+            authLocalMgnt({
+              longTokenLen: 15,
+              shortTokenLen: 6,
+              shortTokenDigits: true,
+              notifier: spyNotifier.callWith
+            })
+          );
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+          db = clone(idType === '_id' ? users_Id : usersId);
           await usersService.create(db);
         });
 
@@ -261,11 +320,7 @@ const usersIdUnderscore = [
               resetShortToken: user.resetShortToken
             });
 
-            assert.deepEqual(expected, [
-              'sendResetPwd',
-              sanitizeUserForEmail(user),
-              { transport: 'sms' }
-            ]);
+            assert.deepEqual(expected, ['sendResetPwd', sanitizeUserForEmail(user), { transport: 'sms' }]);
           } catch (err) {
             console.log(err);
             assert(false, 'err code set');

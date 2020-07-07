@@ -1,15 +1,17 @@
-
 const assert = require('chai').assert;
 const feathers = require('@feathersjs/feathers');
 const feathersMemory = require('feathers-memory');
 const authLocalMgnt = require('../src/index');
 const helpers = require('../src/helpers');
+const authManagementService = require('../src/index');
 
-const makeUsersService = (options) => function (app) {
-  app.use('/users', feathersMemory(options));
-};
+const makeUsersService = options =>
+  function (app) {
+    Object.assign(options, { multi: true });
+    app.use('/users', feathersMemory(options));
+  };
 
-const usersIdUnderscore = [
+const users_Id = [
   { _id: 'a', email: 'a', username: 'john a', sensitiveData: 'some secret' }
 ];
 
@@ -89,15 +91,17 @@ describe('helpers.js - sanitization', () => {
   it('allows for customized sanitize function', async () => {
     const app = feathers();
     app.configure(makeUsersService({ id: '_id' }));
-    app.configure(authLocalMgnt({
-      sanitizeUserForClient: customSanitizeUserForClient
-    }));
+    app.configure(
+      authLocalMgnt({
+        sanitizeUserForClient: customSanitizeUserForClient
+      })
+    );
     app.setup();
     const authManagement = app.service('authManagement');
 
     const usersService = app.service('users');
     await usersService.remove(null);
-    await usersService.create(usersIdUnderscore);
+    await usersService.create(users_Id);
 
     const result = await authManagement.create({
       action: 'resendVerifySignup',

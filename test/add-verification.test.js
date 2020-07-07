@@ -3,7 +3,7 @@ const assert = require('chai').assert;
 const feathers = require('@feathersjs/feathers');
 const authLocalMgnt = require('../src/index');
 const { addVerification } = require('../src/index').hooks;
-const { defaultVerifyDelay, timeoutEachTest } = require('./helpers/config');
+const { defaultVerifyDelay, timeoutEachTest, maxTimeAllTests } = require('./helpers/config');
 
 describe('add-verification.test.js', function () {
   this.timeout(timeoutEachTest);

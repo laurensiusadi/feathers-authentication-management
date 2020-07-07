@@ -1,27 +1,76 @@
-
 const assert = require('chai').assert;
 const feathers = require('@feathersjs/feathers');
 const feathersMemory = require('feathers-memory');
 const authLocalMgnt = require('../src/index');
 const SpyOn = require('./helpers/basic-spy');
-const { timeoutEachTest, defaultVerifyDelay } = require('./helpers/config');
+const {
+  timeoutEachTest,
+  maxTimeAllTests,
+  defaultVerifyDelay
+} = require('./helpers/config');
 
 const now = Date.now();
 
-const makeUsersService = (options) => function (app) {
-  app.use('/users', feathersMemory(options));
-};
+const makeUsersService = options =>
+  function (app) {
+    Object.assign(options, { multi: true });
+    app.use('/users', feathersMemory(options));
+  };
 
 const usersId = [
-  { id: 'a', email: 'a', isVerified: false, verifyToken: '000', verifyShortToken: '00099', verifyExpires: now + 500, username: 'Doe' },
-  { id: 'b', email: 'b', isVerified: true, verifyToken: null, verifyShortToken: null, verifyExpires: null },
-  { id: 'c', email: 'c', isVerified: true, verifyToken: '999', verifyShortToken: '99900', verifyExpires: null } // impossible
+  {
+    id: 'a',
+    email: 'a',
+    isVerified: false,
+    verifyToken: '000',
+    verifyShortToken: '00099',
+    verifyExpires: now + 500,
+    username: 'Doe'
+  },
+  {
+    id: 'b',
+    email: 'b',
+    isVerified: true,
+    verifyToken: null,
+    verifyShortToken: null,
+    verifyExpires: null
+  },
+  {
+    id: 'c',
+    email: 'c',
+    isVerified: true,
+    verifyToken: '999',
+    verifyShortToken: '99900',
+    verifyExpires: null
+  } // impossible
 ];
 
-const usersIdUnderscore = [
-  { _id: 'a', email: 'a', isVerified: false, verifyToken: '000', verifyShortToken: '00099', verifyExpires: now + 500, username: 'Doe' },
-  { _id: 'b', email: 'b', isVerified: true, verifyToken: null, verifyShortToken: null, verifyExpires: null },
-  { _id: 'c', email: 'c', isVerified: true, verifyToken: '999', verifyShortToken: '99900', verifyExpires: null } // impossible
+const users_Id = [
+  {
+    _id: 'a',
+    email: 'a',
+    isVerified: false,
+    verifyToken: '000',
+    verifyShortToken: '00099',
+    verifyExpires: now + 500,
+    username: 'Doe'
+  },
+  {
+    _id: 'b',
+    email: 'b',
+    isVerified: true,
+    verifyToken: null,
+    verifyShortToken: null,
+    verifyExpires: null
+  },
+  {
+    _id: 'c',
+    email: 'c',
+    isVerified: true,
+    verifyToken: '999',
+    verifyShortToken: '99900',
+    verifyExpires: null
+  } // impossible
 ];
 
 ['_id', 'id'].forEach(idType => {
@@ -39,16 +88,19 @@ const usersIdUnderscore = [
 
           beforeEach(async () => {
             app = feathers();
-            app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-            app.configure(authLocalMgnt({
-
-            }));
+            app.configure(
+              makeUsersService({
+                id: idType,
+                paginate: pagination === 'paginated'
+              })
+            );
+            app.configure(authLocalMgnt({}));
             app.setup();
             authLocalMgntService = app.service('authManagement');
 
             usersService = app.service('users');
             await usersService.remove(null);
-            db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+            db = clone(idType === '_id' ? users_Id : usersId);
             await usersService.create(db);
           });
 
@@ -64,11 +116,27 @@ const usersIdUnderscore = [
               });
               const user = await usersService.get(result.id || result._id);
 
-              assert.strictEqual(result.isVerified, false, 'result.isVerified not false');
-              assert.strictEqual(user.isVerified, false, 'isVerified not false');
+              assert.strictEqual(
+                result.isVerified,
+                false,
+                'result.isVerified not false'
+              );
+              assert.strictEqual(
+                user.isVerified,
+                false,
+                'isVerified not false'
+              );
               assert.isString(user.verifyToken, 'verifyToken not String');
-              assert.equal(user.verifyToken.length, 30, 'verify token wrong length');
-              assert.equal(user.verifyShortToken.length, 6, 'verify short token wrong length');
+              assert.equal(
+                user.verifyToken.length,
+                30,
+                'verify token wrong length'
+              );
+              assert.equal(
+                user.verifyShortToken.length,
+                6,
+                'verify short token wrong length'
+              );
               assert.match(user.verifyShortToken, /^[0-9]+$/);
               aboutEqualDateTime(user.verifyExpires, makeDateTime());
             } catch (err) {
@@ -84,10 +152,26 @@ const usersIdUnderscore = [
                 value: values[1]
               });
 
-              assert.strictEqual(result.isVerified, false, 'isVerified not false');
-              assert.strictEqual(result.verifyToken, undefined, 'verifyToken not undefined');
-              assert.strictEqual(result.verifyShortToken, undefined, 'verifyShortToken not undefined');
-              assert.strictEqual(result.verifyExpires, undefined, 'verifyExpires not undefined');
+              assert.strictEqual(
+                result.isVerified,
+                false,
+                'isVerified not false'
+              );
+              assert.strictEqual(
+                result.verifyToken,
+                undefined,
+                'verifyToken not undefined'
+              );
+              assert.strictEqual(
+                result.verifyShortToken,
+                undefined,
+                'verifyShortToken not undefined'
+              );
+              assert.strictEqual(
+                result.verifyExpires,
+                undefined,
+                'verifyExpires not undefined'
+              );
             } catch (err) {
               console.log(err);
               assert.strictEqual(err, null, 'err code set');
@@ -96,7 +180,7 @@ const usersIdUnderscore = [
 
           it('error on verified user', async () => {
             try {
-              await authLocalMgntService.create({
+              const result = await authLocalMgntService.create({
                 action: 'resendVerifySignup',
                 value: values[2]
               });
@@ -110,7 +194,7 @@ const usersIdUnderscore = [
 
           it('error on email not found', async () => {
             try {
-              await authLocalMgntService.create({
+              const result = await authLocalMgntService.create({
                 action: 'resendVerifySignup',
                 value: values[3]
               });
@@ -154,16 +238,23 @@ const usersIdUnderscore = [
 
         beforeEach(async () => {
           app = feathers();
-          app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-          app.configure(authLocalMgnt({
-            longTokenLen: 10
-          }));
+          app.configure(
+            makeUsersService({
+              id: idType,
+              paginate: pagination === 'paginated'
+            })
+          );
+          app.configure(
+            authLocalMgnt({
+              longTokenLen: 10
+            })
+          );
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+          db = clone(idType === '_id' ? users_Id : usersId);
           await usersService.create(db);
         });
 
@@ -177,11 +268,23 @@ const usersIdUnderscore = [
             });
             const user = await usersService.get(result.id || result._id);
 
-            assert.strictEqual(result.isVerified, false, 'user.isVerified not false');
+            assert.strictEqual(
+              result.isVerified,
+              false,
+              'user.isVerified not false'
+            );
             assert.strictEqual(user.isVerified, false, 'isVerified not false');
             assert.isString(user.verifyToken, 'verifyToken not String');
-            assert.equal(user.verifyToken.length, 20, 'verify token wrong length');
-            assert.equal(user.verifyShortToken.length, 6, 'verify short token wrong length');
+            assert.equal(
+              user.verifyToken.length,
+              20,
+              'verify token wrong length'
+            );
+            assert.equal(
+              user.verifyShortToken.length,
+              6,
+              'verify short token wrong length'
+            );
             assert.match(user.verifyShortToken, /^[0-9]+$/);
             aboutEqualDateTime(user.verifyExpires, makeDateTime());
           } catch (err) {
@@ -200,17 +303,24 @@ const usersIdUnderscore = [
 
         beforeEach(async () => {
           app = feathers();
-          app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-          app.configure(authLocalMgnt({
-            longTokenLen: 15, // need to reset this
-            shortTokenLen: 8
-          }));
+          app.configure(
+            makeUsersService({
+              id: idType,
+              paginate: pagination === 'paginated'
+            })
+          );
+          app.configure(
+            authLocalMgnt({
+              longTokenLen: 15, // need to reset this
+              shortTokenLen: 8
+            })
+          );
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+          db = clone(idType === '_id' ? users_Id : usersId);
           await usersService.create(db);
         });
 
@@ -224,11 +334,23 @@ const usersIdUnderscore = [
             });
             const user = await usersService.get(result.id || result._id);
 
-            assert.strictEqual(result.isVerified, false, 'user.isVerified not false');
+            assert.strictEqual(
+              result.isVerified,
+              false,
+              'user.isVerified not false'
+            );
             assert.strictEqual(user.isVerified, false, 'isVerified not false');
             assert.isString(user.verifyToken, 'verifyToken not String');
-            assert.equal(user.verifyToken.length, 30, 'verify token wrong length');
-            assert.equal(user.verifyShortToken.length, 8, 'verify short token wrong length');
+            assert.equal(
+              user.verifyToken.length,
+              30,
+              'verify token wrong length'
+            );
+            assert.equal(
+              user.verifyShortToken.length,
+              8,
+              'verify short token wrong length'
+            );
             assert.match(user.verifyShortToken, /^[0-9]+$/);
             aboutEqualDateTime(user.verifyExpires, makeDateTime());
           } catch (err) {
@@ -247,18 +369,25 @@ const usersIdUnderscore = [
 
         beforeEach(async () => {
           app = feathers();
-          app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-          app.configure(authLocalMgnt({
-            longTokenLen: 15, // need to reset this
-            shortTokenLen: 9,
-            shortTokenDigits: false
-          }));
+          app.configure(
+            makeUsersService({
+              id: idType,
+              paginate: pagination === 'paginated'
+            })
+          );
+          app.configure(
+            authLocalMgnt({
+              longTokenLen: 15, // need to reset this
+              shortTokenLen: 9,
+              shortTokenDigits: false
+            })
+          );
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+          db = clone(idType === '_id' ? users_Id : usersId);
           await usersService.create(db);
         });
 
@@ -272,11 +401,23 @@ const usersIdUnderscore = [
             });
             const user = await usersService.get(result.id || result._id);
 
-            assert.strictEqual(result.isVerified, false, 'user.isVerified not false');
+            assert.strictEqual(
+              result.isVerified,
+              false,
+              'user.isVerified not false'
+            );
             assert.strictEqual(user.isVerified, false, 'isVerified not false');
             assert.isString(user.verifyToken, 'verifyToken not String');
-            assert.equal(user.verifyToken.length, 30, 'verify token wrong length');
-            assert.equal(user.verifyShortToken.length, 9, 'verify short token wrong length');
+            assert.equal(
+              user.verifyToken.length,
+              30,
+              'verify token wrong length'
+            );
+            assert.equal(
+              user.verifyShortToken.length,
+              9,
+              'verify short token wrong length'
+            );
             assert.notMatch(user.verifyShortToken, /^[0-9]+$/);
             aboutEqualDateTime(user.verifyExpires, makeDateTime());
           } catch (err) {
@@ -295,18 +436,25 @@ const usersIdUnderscore = [
 
         beforeEach(async () => {
           app = feathers();
-          app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-          app.configure(authLocalMgnt({
-            longTokenLen: 15, // need to reset this
-            shortTokenLen: 6,
-            shortTokenDigits: false
-          }));
+          app.configure(
+            makeUsersService({
+              id: idType,
+              paginate: pagination === 'paginated'
+            })
+          );
+          app.configure(
+            authLocalMgnt({
+              longTokenLen: 15, // need to reset this
+              shortTokenLen: 6,
+              shortTokenDigits: false
+            })
+          );
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+          db = clone(idType === '_id' ? users_Id : usersId);
           await usersService.create(db);
         });
 
@@ -323,11 +471,23 @@ const usersIdUnderscore = [
             });
             const user = await usersService.get(result.id || result._id);
 
-            assert.strictEqual(result.isVerified, false, 'user.isVerified not false');
+            assert.strictEqual(
+              result.isVerified,
+              false,
+              'user.isVerified not false'
+            );
             assert.strictEqual(user.isVerified, false, 'isVerified not false');
             assert.isString(user.verifyToken, 'verifyToken not String');
-            assert.equal(user.verifyToken.length, 30, 'verify token wrong length');
-            assert.equal(user.verifyShortToken.length, 6, 'verify short token wrong length');
+            assert.equal(
+              user.verifyToken.length,
+              30,
+              'verify token wrong length'
+            );
+            assert.equal(
+              user.verifyShortToken.length,
+              6,
+              'verify short token wrong length'
+            );
             assert.notMatch(user.verifyShortToken, /^[0-9]+$/);
             aboutEqualDateTime(user.verifyExpires, makeDateTime());
           } catch (err) {
@@ -385,19 +545,26 @@ const usersIdUnderscore = [
           spyNotifier = new SpyOn(notifier);
 
           app = feathers();
-          app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-          app.configure(authLocalMgnt({
-            longTokenLen: 15, // need to reset this
-            shortTokenLen: 6, // need to reset this
-            shortTokenDigits: true, // need to reset this
-            notifier: spyNotifier.callWith
-          }));
+          app.configure(
+            makeUsersService({
+              id: idType,
+              paginate: pagination === 'paginated'
+            })
+          );
+          app.configure(
+            authLocalMgnt({
+              longTokenLen: 15, // need to reset this
+              shortTokenLen: 6, // need to reset this
+              shortTokenDigits: true, // need to reset this
+              notifier: spyNotifier.callWith
+            })
+          );
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+          db = clone(idType === '_id' ? users_Id : usersId);
           await usersService.create(db);
         });
 
@@ -412,21 +579,32 @@ const usersIdUnderscore = [
             });
             const user = await usersService.get(result.id || result._id);
 
-            assert.strictEqual(result.isVerified, false, 'user.isVerified not false');
+            assert.strictEqual(
+              result.isVerified,
+              false,
+              'user.isVerified not false'
+            );
 
             assert.strictEqual(user.isVerified, false, 'isVerified not false');
             assert.isString(user.verifyToken, 'verifyToken not String');
-            assert.equal(user.verifyToken.length, 30, 'verify token wrong length');
-            assert.equal(user.verifyShortToken.length, 6, 'verify short token wrong length');
+            assert.equal(
+              user.verifyToken.length,
+              30,
+              'verify token wrong length'
+            );
+            assert.equal(
+              user.verifyShortToken.length,
+              6,
+              'verify short token wrong length'
+            );
             assert.match(user.verifyShortToken, /^[0-9]+$/);
             aboutEqualDateTime(user.verifyExpires, makeDateTime());
 
-            assert.deepEqual(
-              spyNotifier.result()[0].args, [
-                'resendVerifySignup',
-                sanitizeUserForEmail(user),
-                { transport: 'email' }
-              ]);
+            assert.deepEqual(spyNotifier.result()[0].args, [
+              'resendVerifySignup',
+              sanitizeUserForEmail(user),
+              { transport: 'email' }
+            ]);
           } catch (err) {
             console.log(err);
             assert.strictEqual(err, null, 'err code set');

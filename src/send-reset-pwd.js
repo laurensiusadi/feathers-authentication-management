@@ -1,4 +1,3 @@
-
 const makeDebug = require('debug');
 const concatIDAndHash = require('./helpers/concat-id-and-hash');
 const ensureObjPropsValid = require('./helpers/ensure-obj-props-valid');
@@ -12,7 +11,7 @@ const debug = makeDebug('authLocalMgnt:sendResetPwd');
 
 module.exports = sendResetPwd;
 
-async function sendResetPwd (options, identifyUser, notifierOptions) {
+async function sendResetPwd (options, identifyUser, notifierOptions, field) {
   debug('sendResetPwd');
   const usersService = options.app.service(options.service);
   const usersServiceIdName = usersService.id;
@@ -24,19 +23,15 @@ async function sendResetPwd (options, identifyUser, notifierOptions) {
 
   const user2 = Object.assign(user1, {
     resetExpires: Date.now() + options.resetDelay,
-    resetToken: concatIDAndHash(
-      user1[usersServiceIdName],
-      await getLongToken(options.longTokenLen)
-    ),
+    resetToken: concatIDAndHash(user1[usersServiceIdName], await getLongToken(options.longTokenLen)),
     resetShortToken: await getShortToken(options.shortTokenLen, options.shortTokenDigits)
   });
 
   notifier(options.notifier, 'sendResetPwd', user2, notifierOptions);
-
   const user3 = await usersService.patch(user2[usersServiceIdName], {
     resetExpires: user2.resetExpires,
-    resetToken: await hashPassword(options.app, user2.resetToken),
-    resetShortToken: await hashPassword(options.app, user2.resetShortToken)
+    resetToken: await hashPassword(options.app, user2.resetToken, field),
+    resetShortToken: await hashPassword(options.app, user2.resetShortToken, field)
   });
 
   return options.sanitizeUserForClient(user3);

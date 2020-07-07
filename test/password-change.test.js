@@ -1,26 +1,54 @@
-
 const assert = require('chai').assert;
+const auth = require('@feathersjs/authentication-local').hooks;
 const bcrypt = require('bcryptjs');
 const feathers = require('@feathersjs/feathers');
 const feathersMemory = require('feathers-memory');
 const authLocalMgnt = require('../src/index');
+const authService = require('./helpers/authenticationService');
+const { authentication: authConfig } = require('./helpers/config');
+
 const SpyOn = require('./helpers/basic-spy');
 const { hashPassword } = require('../src/helpers');
-const { timeoutEachTest } = require('./helpers/config');
+const { timeoutEachTest, maxTimeAllTests } = require('./helpers/config');
 
-const makeUsersService = (options) => function (app) {
-  app.use('/users', feathersMemory(options));
-};
+const makeUsersService = options =>
+  function (app) {
+    app.use('/users', feathersMemory(options));
+  };
 
 // users DB
-const usersIdUnderscore = [
-  { _id: 'a', email: 'a', plainPassword: 'aa', plainNewPassword: 'xx', isVerified: false },
-  { _id: 'b', email: 'b', plainPassword: 'bb', plainNewPassword: 'yy', isVerified: true }
+const users_Id = [
+  {
+    _id: 'a',
+    email: 'a',
+    plainPassword: 'aa',
+    plainNewPassword: 'xx',
+    isVerified: false
+  },
+  {
+    _id: 'b',
+    email: 'b',
+    plainPassword: 'bb',
+    plainNewPassword: 'yy',
+    isVerified: true
+  }
 ];
 
 const usersId = [
-  { id: 'a', email: 'a', plainPassword: 'aa', plainNewPassword: 'xx', isVerified: false },
-  { id: 'b', email: 'b', plainPassword: 'bb', plainNewPassword: 'yy', isVerified: true }
+  {
+    id: 'a',
+    email: 'a',
+    plainPassword: 'aa',
+    plainNewPassword: 'xx',
+    isVerified: false
+  },
+  {
+    id: 'b',
+    email: 'b',
+    plainPassword: 'bb',
+    plainNewPassword: 'yy',
+    isVerified: true
+  }
 ];
 
 // Tests
@@ -32,35 +60,34 @@ describe('password-change.js', function () {
 
     beforeEach(async () => {
       app = feathers();
+      app.use('/auth', authService(app, Object.assign({}, { ...authConfig, entity: null })));
       app.setup();
 
       // Ugly but makes test much faster
-      if (!usersIdUnderscore[0].password) {
-        usersIdUnderscore[0].password = await hashPassword(app, usersIdUnderscore[0].plainPassword);
-        usersIdUnderscore[0].newPassword = await hashPassword(app, usersIdUnderscore[0].plainNewPassword);
-        usersIdUnderscore[1].password = await hashPassword(app, usersIdUnderscore[1].plainPassword);
-        usersIdUnderscore[1].newPassword = await hashPassword(app, usersIdUnderscore[1].plainNewPassword);
+      if (!users_Id[0].password) {
+        users_Id[0].password = await hashPassword(app, users_Id[0].plainPassword, 'password');
+        users_Id[0].newPassword = await hashPassword(app, users_Id[0].plainNewPassword, 'password');
+        users_Id[1].password = await hashPassword(app, users_Id[1].plainPassword, 'password');
+        users_Id[1].newPassword = await hashPassword(app, users_Id[1].plainNewPassword, 'password');
 
-        usersId[0].password = usersIdUnderscore[0].password;
-        usersId[0].newPassword = usersIdUnderscore[0].newPassword;
-        usersId[1].password = usersIdUnderscore[1].password;
-        usersId[1].newPassword = usersIdUnderscore[1].newPassword;
+        usersId[0].password = users_Id[0].password;
+        usersId[0].newPassword = users_Id[0].newPassword;
+        usersId[1].password = users_Id[1].password;
+        usersId[1].newPassword = users_Id[1].newPassword;
       }
     });
 
     it('compare plain passwords to encrypted ones', function () {
-      assert.isOk(bcrypt.compareSync(usersIdUnderscore[0].plainPassword, usersIdUnderscore[0].password), '_Id [0]');
-      assert.isOk(bcrypt.compareSync(usersIdUnderscore[1].plainPassword, usersIdUnderscore[1].password), '_Id [1]');
+      assert.isOk(bcrypt.compareSync(users_Id[0].plainPassword, users_Id[0].password), '_Id [0]');
+      assert.isOk(bcrypt.compareSync(users_Id[1].plainPassword, users_Id[1].password), '_Id [1]');
 
       assert.isOk(bcrypt.compareSync(usersId[0].plainNewPassword, usersId[0].newPassword), 'Id [0]');
       assert.isOk(bcrypt.compareSync(usersId[1].plainNewPassword, usersId[1].newPassword), 'Id [1]');
     });
   });
 
-  /* 'id' */
-  ['_id'].forEach(idType => {
-    /* 'non-paginated' */
-    ['paginated'].forEach(pagination => {
+  ['_id' /* 'id' */].forEach(idType => {
+    ['paginated' /* 'non-paginated' */].forEach(pagination => {
       describe(`passwordChange ${pagination} ${idType}`, () => {
         describe('standard', () => {
           let app;
@@ -71,22 +98,28 @@ describe('password-change.js', function () {
 
           beforeEach(async () => {
             app = feathers();
-            app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-            app.configure(authLocalMgnt({
+            app.use('/authentication', authService(app));
 
-            }));
+            app.configure(
+              makeUsersService({
+                multi: true,
+                id: idType,
+                paginate: pagination === 'paginated'
+              })
+            );
+            app.configure(authLocalMgnt({}));
             app.setup();
             authLocalMgntService = app.service('authManagement');
 
             usersService = app.service('users');
             await usersService.remove(null);
-            db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+            db = clone(idType === '_id' ? users_Id : usersId);
             await usersService.create(db);
           });
 
           it('updates verified user', async () => {
             try {
-              const userRec = clone(usersIdUnderscore[1]);
+              const userRec = clone(users_Id[1]);
 
               result = await authLocalMgntService.create({
                 action: 'passwordChange',
@@ -101,7 +134,7 @@ describe('password-change.js', function () {
               const user = await usersService.get(result.id || result._id);
 
               assert.strictEqual(result.isVerified, true, 'isVerified not true');
-              assert.isOk(bcrypt.compareSync(user.plainNewPassword, user.password), 'wrong password [1]');
+              assert.isOk(bcrypt.compareSync(user.plainNewPassword, user.password), `wrong password [1]`);
             } catch (err) {
               console.log(err);
               assert.strictEqual(err, null, 'err code set');
@@ -110,7 +143,7 @@ describe('password-change.js', function () {
 
           it('updates unverified user', async () => {
             try {
-              const userRec = clone(usersIdUnderscore[0]);
+              const userRec = clone(users_Id[0]);
 
               result = await authLocalMgntService.create({
                 action: 'passwordChange',
@@ -125,7 +158,7 @@ describe('password-change.js', function () {
               const user = await usersService.get(result.id || result._id);
 
               assert.strictEqual(result.isVerified, false, 'isVerified not false');
-              assert.isOk(bcrypt.compareSync(user.plainNewPassword, user.password), '[0]');
+              assert.isOk(bcrypt.compareSync(user.plainNewPassword, user.password), `[0]`);
             } catch (err) {
               console.log(err);
               assert.strictEqual(err, null, 'err code set');
@@ -134,7 +167,7 @@ describe('password-change.js', function () {
 
           it('error on wrong password', async () => {
             try {
-              const userRec = clone(usersIdUnderscore[0]);
+              const userRec = clone(users_Id[0]);
 
               result = await authLocalMgntService.create({
                 action: 'passwordChange',
@@ -146,7 +179,7 @@ describe('password-change.js', function () {
                   password: userRec.plainNewPassword
                 }
               });
-              await usersService.get(result.id || result._id);
+              const user = await usersService.get(result.id || result._id);
 
               assert(false, 'unexpected succeeded.');
             } catch (err) {
@@ -169,22 +202,32 @@ describe('password-change.js', function () {
             spyNotifier = new SpyOn(notifier);
 
             app = feathers();
-            app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-            app.configure(authLocalMgnt({
-              notifier: spyNotifier.callWith
-            }));
+            app.use('/authentication', authService(app));
+
+            app.configure(
+              makeUsersService({
+                multi: true,
+                id: idType,
+                paginate: pagination === 'paginated'
+              })
+            );
+            app.configure(
+              authLocalMgnt({
+                notifier: spyNotifier.callWith
+              })
+            );
             app.setup();
             authLocalMgntService = app.service('authManagement');
 
             usersService = app.service('users');
             await usersService.remove(null);
-            db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+            db = clone(idType === '_id' ? users_Id : usersId);
             await usersService.create(db);
           });
 
           it('updates verified user', async () => {
             try {
-              const userRec = clone(usersIdUnderscore[1]);
+              const userRec = clone(users_Id[1]);
 
               result = await authLocalMgntService.create({
                 action: 'passwordChange',
@@ -199,14 +242,8 @@ describe('password-change.js', function () {
               const user = await usersService.get(result.id || result._id);
 
               assert.strictEqual(result.isVerified, true, 'isVerified not true');
-              assert.isOk(bcrypt.compareSync(user.plainNewPassword, user.password), '[1');
-              assert.deepEqual(
-                spyNotifier.result()[0].args,
-                [
-                  'passwordChange',
-                  sanitizeUserForEmail(user),
-                  {}
-                ]);
+              assert.isOk(bcrypt.compareSync(user.plainNewPassword, user.password), `[1`);
+              assert.deepEqual(spyNotifier.result()[0].args, ['passwordChange', sanitizeUserForEmail(user), {}]);
             } catch (err) {
               console.log(err);
               assert.strictEqual(err, null, 'err code set');

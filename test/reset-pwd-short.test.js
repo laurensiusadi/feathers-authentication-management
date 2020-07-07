@@ -1,40 +1,103 @@
-
 const assert = require('chai').assert;
 const feathers = require('@feathersjs/feathers');
 const feathersMemory = require('feathers-memory');
 const authLocalMgnt = require('../src/index');
+const authService = require('./helpers/authenticationService');
 const SpyOn = require('./helpers/basic-spy');
 const { hashPassword } = require('../src/helpers');
 const { timeoutEachTest, maxTimeAllTests } = require('./helpers/config');
 
 const now = Date.now();
 
-const makeUsersService = (options) => function (app) {
-  app.use('/users', feathersMemory(options));
-};
+const makeUsersService = options =>
+  function (app) {
+    app.use('/users', feathersMemory(options));
+  };
 
 const fieldToHash = 'resetShortToken';
-const usersIdUnderscore = [
+const users_Id = [
   // The added time interval must be longer than it takes to run ALL the tests
-  { _id: 'a', email: 'a', username: 'aa', isVerified: true, resetToken: '000', resetShortToken: '00099', resetExpires: now + maxTimeAllTests },
-  { _id: 'b', email: 'b', username: 'bb', isVerified: true, resetToken: null, resetShortToken: null, resetExpires: null },
-  { _id: 'c', email: 'c', username: 'cc', isVerified: true, resetToken: '111', resetShortToken: '11199', resetExpires: now - maxTimeAllTests },
-  { _id: 'd', email: 'd', username: 'dd', isVerified: false, resetToken: '222', resetShortToken: '22299', resetExpires: now - maxTimeAllTests }
+  {
+    _id: 'a',
+    email: 'a',
+    username: 'aa',
+    isVerified: true,
+    resetToken: '000',
+    resetShortToken: '00099',
+    resetExpires: now + maxTimeAllTests
+  },
+  {
+    _id: 'b',
+    email: 'b',
+    username: 'bb',
+    isVerified: true,
+    resetToken: null,
+    resetShortToken: null,
+    resetExpires: null
+  },
+  {
+    _id: 'c',
+    email: 'c',
+    username: 'cc',
+    isVerified: true,
+    resetToken: '111',
+    resetShortToken: '11199',
+    resetExpires: now - maxTimeAllTests
+  },
+  {
+    _id: 'd',
+    email: 'd',
+    username: 'dd',
+    isVerified: false,
+    resetToken: '222',
+    resetShortToken: '22299',
+    resetExpires: now - maxTimeAllTests
+  }
 ];
 
 const usersId = [
   // The added time interval must be longer than it takes to run ALL the tests
-  { id: 'a', email: 'a', username: 'aa', isVerified: true, resetToken: '000', resetShortToken: '00099', resetExpires: now + maxTimeAllTests },
-  { id: 'b', email: 'b', username: 'bb', isVerified: true, resetToken: null, resetShortToken: null, resetExpires: null },
-  { id: 'c', email: 'c', username: 'cc', isVerified: true, resetToken: '111', resetShortToken: '11199', resetExpires: now - maxTimeAllTests },
-  { id: 'd', email: 'd', username: 'dd', isVerified: false, resetToken: '222', resetShortToken: '22299', resetExpires: now - maxTimeAllTests }
+  {
+    id: 'a',
+    email: 'a',
+    username: 'aa',
+    isVerified: true,
+    resetToken: '000',
+    resetShortToken: '00099',
+    resetExpires: now + maxTimeAllTests
+  },
+  {
+    id: 'b',
+    email: 'b',
+    username: 'bb',
+    isVerified: true,
+    resetToken: null,
+    resetShortToken: null,
+    resetExpires: null
+  },
+  {
+    id: 'c',
+    email: 'c',
+    username: 'cc',
+    isVerified: true,
+    resetToken: '111',
+    resetShortToken: '11199',
+    resetExpires: now - maxTimeAllTests
+  },
+  {
+    id: 'd',
+    email: 'd',
+    username: 'dd',
+    isVerified: false,
+    resetToken: '222',
+    resetShortToken: '22299',
+    resetExpires: now - maxTimeAllTests
+  }
 ];
 
 // Tests
-/* 'id' */
-['_id'].forEach(idType => {
-  /* 'non-paginated' */
-  ['paginated'].forEach(pagination => {
+['_id' /* 'id' */].forEach(idType => {
+  ['paginated' /* 'non-paginated' */].forEach(pagination => {
     describe(`reset-pwd-short.js ${pagination} ${idType}`, function () {
       this.timeout(timeoutEachTest);
 
@@ -47,25 +110,39 @@ const usersId = [
 
         beforeEach(async () => {
           app = feathers();
-          app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-          app.configure(authLocalMgnt({
-            identifyUserProps: ['email', 'username']
-          }));
+          app.use('/authentication', authService(app));
+          app.configure(
+            makeUsersService({
+              multi: true,
+              id: idType,
+              paginate: pagination === 'paginated'
+            })
+          );
+          app.configure(
+            authLocalMgnt({
+              identifyUserProps: ['email', 'username']
+            })
+          );
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           // Ugly but makes test much faster
-          if (usersIdUnderscore[0][fieldToHash].length < 15) {
-            for (let i = 0, ilen = usersIdUnderscore.length; i < ilen; i++) {
-              const hashed = await hashPassword(app, usersIdUnderscore[i][fieldToHash]);
-              usersIdUnderscore[i][fieldToHash] = hashed;
+          if (users_Id[0][fieldToHash].length < 15) {
+            for (let i = 0, ilen = users_Id.length; i < ilen; i++) {
+              if (!users_Id[i][fieldToHash]) continue;
+              const hashed = await hashPassword(
+                app,
+                users_Id[i][fieldToHash],
+                'resetShortToken'
+              );
+              users_Id[i][fieldToHash] = hashed;
               usersId[i][fieldToHash] = hashed;
             }
           }
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+          db = clone(idType === '_id' ? users_Id : usersId);
           await usersService.create(db);
         });
 
@@ -83,12 +160,24 @@ const usersId = [
             });
             const user = await usersService.get(result.id || result._id);
 
-            assert.strictEqual(result.isVerified, true, 'user.isVerified not true');
+            assert.strictEqual(
+              result.isVerified,
+              true,
+              'user.isVerified not true'
+            );
 
             assert.strictEqual(user.isVerified, true, 'isVerified not true');
             assert.strictEqual(user.resetToken, null, 'resetToken not null');
-            assert.strictEqual(user.resetShortToken, null, 'resetShortToken not null');
-            assert.strictEqual(user.resetExpires, null, 'resetExpires not null');
+            assert.strictEqual(
+              user.resetShortToken,
+              null,
+              'resetShortToken not null'
+            );
+            assert.strictEqual(
+              user.resetExpires,
+              null,
+              'resetExpires not null'
+            );
             assert.isString(user.password, 'password not a string');
             assert.equal(user.password.length, 60, 'password wrong length');
           } catch (err) {
@@ -112,9 +201,21 @@ const usersId = [
             const user = await usersService.get(result.id || result._id);
 
             assert.strictEqual(result.isVerified, true, 'isVerified not true');
-            assert.strictEqual(result.resetToken, undefined, 'resetToken not undefined');
-            assert.strictEqual(result.resetShortToken, undefined, 'resetShortToken not undefined');
-            assert.strictEqual(result.resetExpires, undefined, 'resetExpires not undefined');
+            assert.strictEqual(
+              result.resetToken,
+              undefined,
+              'resetToken not undefined'
+            );
+            assert.strictEqual(
+              result.resetShortToken,
+              undefined,
+              'resetShortToken not undefined'
+            );
+            assert.strictEqual(
+              result.resetExpires,
+              undefined,
+              'resetExpires not undefined'
+            );
 
             assert.isString(user.password, 'password not a string');
             assert.equal(user.password.length, 60, 'password wrong length');
@@ -140,9 +241,21 @@ const usersId = [
             const user = await usersService.get(result.id || result._id);
 
             assert.strictEqual(result.isVerified, true, 'isVerified not true');
-            assert.strictEqual(result.resetToken, undefined, 'resetToken not undefined');
-            assert.strictEqual(result.resetShortToken, undefined, 'resetShortToken not undefined');
-            assert.strictEqual(result.resetExpires, undefined, 'resetExpires not undefined');
+            assert.strictEqual(
+              result.resetToken,
+              undefined,
+              'resetToken not undefined'
+            );
+            assert.strictEqual(
+              result.resetShortToken,
+              undefined,
+              'resetShortToken not undefined'
+            );
+            assert.strictEqual(
+              result.resetExpires,
+              undefined,
+              'resetExpires not undefined'
+            );
 
             assert.isString(user.password, 'password not a string');
             assert.equal(user.password.length, 60, 'password wrong length');
@@ -284,18 +397,27 @@ const usersId = [
           spyNotifier = new SpyOn(notifier);
 
           app = feathers();
-          app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
-          app.configure(authLocalMgnt({
-            // maybe reset identifyUserProps
-            notifier: spyNotifier.callWith,
-            testMode: true
-          }));
+          app.use('/authentication', authService(app));
+          app.configure(
+            makeUsersService({
+              multi: true,
+              id: idType,
+              paginate: pagination === 'paginated'
+            })
+          );
+          app.configure(
+            authLocalMgnt({
+              // maybe reset identifyUserProps
+              notifier: spyNotifier.callWith,
+              testMode: true
+            })
+          );
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          db = clone(idType === '_id' ? usersIdUnderscore : usersId);
+          db = clone(idType === '_id' ? users_Id : usersId);
           await usersService.create(db);
         });
 
@@ -313,27 +435,45 @@ const usersId = [
             });
             const user = await usersService.get(result.id || result._id);
 
-            assert.strictEqual(result.isVerified, true, 'user.isVerified not true');
+            assert.strictEqual(
+              result.isVerified,
+              true,
+              'user.isVerified not true'
+            );
 
             assert.strictEqual(user.isVerified, true, 'isVerified not true');
             assert.strictEqual(user.resetToken, null, 'resetToken not null');
-            assert.strictEqual(user.resetExpires, null, 'resetExpires not null');
+            assert.strictEqual(
+              user.resetExpires,
+              null,
+              'resetExpires not null'
+            );
 
             const hash = user.password;
             assert.isString(hash, 'password not a string');
             assert.equal(hash.length, 60, 'password wrong length');
 
-            assert.deepEqual(
-              spyNotifier.result()[0].args,
-              [
-                'resetPwd',
-                Object.assign({}, sanitizeUserForEmail(user)),
-                {}
-              ]);
+            assert.deepEqual(spyNotifier.result()[0].args, [
+              'resetPwd',
+              Object.assign({}, sanitizeUserForEmail(user)),
+              {}
+            ]);
           } catch (err) {
             console.log(err);
             assert.strictEqual(err, null, 'err code set');
           }
+        });
+
+        it('verifies reset with short tokens works with generated tokens', async () => {
+          const i = 0;
+          await authLocalMgntService.create({ action: 'sendResetPwd', value: { email: db[i].email } });
+          await authLocalMgntService.create({ action: 'resetPwdShort',
+            value: {
+              token: spyNotifier.result()[0].args[1].resetShortToken,
+              password: '123456',
+              user: { email: db[i].email }
+            }
+          });
         });
       });
     });

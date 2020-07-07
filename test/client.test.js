@@ -33,9 +33,9 @@ const authLocalMgntFake = function () {
       spyAuthenticateEmail = obj.email;
       spyAuthenticatePassword = obj.password;
 
-      const index = usersDb.findIndex(u => u.email === obj.email);
+      const index = usersDb[0].email === obj.email ? 0 : 1;
 
-      return Promise.resolve({ user: usersDb[index] });
+      return Promise.resolve({ data: usersDb[index] });
     };
 
     app.log = () => {};
@@ -142,11 +142,9 @@ describe('client.test.js', () => {
 
       assert.deepEqual(spyData, {
         action: 'identityChange',
-        value: {
-          user: { username: 'q' },
+        value: { user: { username: 'q' },
           password: '12345678',
-          changes: { email: 'b@b.com' }
-        }
+          changes: { email: 'b@b.com' } }
       });
     });
 
@@ -155,7 +153,7 @@ describe('client.test.js', () => {
 
       assert.equal(spyAuthenticateEmail, 'ok');
       assert.equal(spyAuthenticatePassword, 'bb');
-      assert.deepEqual(result, usersDb[1]);
+      assert.deepEqual(result.data, usersDb[1]);
     });
 
     it('authenticate is not verified', async () => {

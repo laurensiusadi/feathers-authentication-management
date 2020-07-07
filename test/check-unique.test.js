@@ -1,13 +1,13 @@
-
 const assert = require('chai').assert;
 const feathers = require('@feathersjs/feathers');
 const feathersMemory = require('feathers-memory');
 const authLocalMgnt = require('../src/index');
 const { timeoutEachTest } = require('./helpers/config');
 
-const makeUsersService = (options) => function (app) {
-  app.use('/users', feathersMemory(options));
-};
+const makeUsersService = options =>
+  function (app) {
+    app.use('/users', feathersMemory(options));
+  };
 
 const usersId = [
   { id: 'a', email: 'a', username: 'john a' },
@@ -15,7 +15,7 @@ const usersId = [
   { id: 'c', email: 'c', username: 'john b' }
 ];
 
-const usersIdUnderscore = [
+const users_Id = [
   { _id: 'a', email: 'a', username: 'john a' },
   { _id: 'b', email: 'b', username: 'john b' },
   { _id: 'c', email: 'c', username: 'john b' }
@@ -34,22 +34,31 @@ const usersIdUnderscore = [
         beforeEach(async () => {
           app = feathers();
           app.configure(authLocalMgnt());
-          app.configure(makeUsersService({ id: idType, paginate: pagination === 'paginated' }));
+          app.configure(
+            makeUsersService({
+              multi: true,
+              id: idType,
+              paginate: pagination === 'paginated'
+            })
+          );
           app.setup();
           authLocalMgntService = app.service('authManagement');
 
           usersService = app.service('users');
           await usersService.remove(null);
-          await usersService.create(clone(idType === '_id' ? usersIdUnderscore : usersId));
+          await usersService.create(
+            clone(idType === '_id' ? users_Id : usersId)
+          );
         });
 
         it('returns a promise', async () => {
-          const res = authLocalMgntService.create({
-            action: 'checkUnique',
-            value: { username: 'john a' }
-          })
-            .then(() => {})
-            .catch(() => {});
+          const res = authLocalMgntService
+            .create({
+              action: 'checkUnique',
+              value: { username: 'john a' }
+            })
+            .then(() => { })
+            .catch(() => { });
 
           assert.isOk(res, 'no promise returned');
           assert.isFunction(res.then, 'not a function');

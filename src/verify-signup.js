@@ -16,14 +16,16 @@ module.exports = {
 async function verifySignupWithLongToken (options, verifyToken) {
   ensureValuesAreStrings(verifyToken);
 
-  return verifySignup(options, { verifyToken }, { verifyToken });
+  const result = await verifySignup(options, { verifyToken }, { verifyToken });
+  return result;
 }
 
 async function verifySignupWithShortToken (options, verifyShortToken, identifyUser) {
   ensureValuesAreStrings(verifyShortToken);
   ensureObjPropsValid(identifyUser, options.identifyUserProps);
 
-  return verifySignup(options, identifyUser, { verifyShortToken });
+  const result = await verifySignup(options, identifyUser, { verifyShortToken });
+  return result;
 }
 
 async function verifySignup (options, query, tokens) {
@@ -55,6 +57,7 @@ async function verifySignup (options, query, tokens) {
       verifyChanges: {}
     });
 
-    return usersService.patch(user[usersServiceIdName], patchToUser, {});
+    const result = await usersService.patch(user[usersServiceIdName], patchToUser, {});
+    return result;
   }
 }
