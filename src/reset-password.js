@@ -72,7 +72,7 @@ async function resetPassword (options, query, tokens, password, field) {
       resetShortToken: null,
       resetExpires: null
     });
-    
+
     throw new errors.BadRequest('Invalid token. Get for a new one. (authLocalMgnt)', {
       errors: { $className: 'invalidToken' }
     });
